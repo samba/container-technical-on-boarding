@@ -37,15 +37,18 @@ $(REVEL):
 
 # Development 
 
+.PHONY: all
 all: vendor vet build test
 
 glide.lock: $(GLIDE) glide.yaml
 	$(GLIDE) update
 	@touch $@
 
+.PHONY: vendor
 vendor: glide.lock
 	$(GLIDE) install
 
+.PHONY: vet
 vet: $(GOMETALINTER) 
 	$(GOMETALINTER) --install
 	$(GOMETALINTER) --vendored-linters \
@@ -60,11 +63,13 @@ vet: $(GOMETALINTER)
 		--tests \
 		$(APP_PATH)/...
 
+.PHONY: build
 build: $(APP_NAME) $(REVEL)
 
 $(APP_NAME):
 	go build -v $(LDFLAGS) $(APP_PATH_PKGS)
 
+.PHONY: test
 test: vet
 	go test -race -v $(APP_PATH_PKGS)
 
@@ -72,8 +77,10 @@ coverage.html: $(shell find $(APP_PATH_PKGS) -name '*.go')
 	go test -covermode=count -coverprofile=coverage.prof $(APP_PATH_PKGS)
 	go tool cover -html=coverage.prof -o $@
 
+.PHONY: test-cover
 test-cover: coverage.html
 
+.PHONY: clean
 clean:
 	-rm -vf ./coverage.* ./$(APP_NAME)
 	-rm -rf ./test-results/
@@ -81,6 +88,7 @@ clean:
 godoc.txt: $(shell find ./ -name '*.go')
 	godoc $(APP_PATH) > $@
 
+.PHONY: docs
 docs:  godoc.txt
 
 # Docker
@@ -90,16 +98,19 @@ docker-build: Dockerfile
 	   --build-arg VERSION=$(APP_VERSION) \
 	   --build-arg BUILD=$(APP_BUILD) \
 	   -t $(IMAGE_NAME) .
-	touch docker-build
+	touch $@
 
+.PHONY: docker-test
 docker-test: docker-build
 	docker run --rm --env-file ./template.env \
 		 $(IMAGE_NAME) \
 		 revel test $(APP_PACKAGE) dev
 
+.PHONY: docker-run
 docker-run: docker-build
 	docker run $(DOCKER_RUN_OPTS) $(IMAGE_NAME) $(DOCKER_RUN_CMD)
 
+.PHONY: docker-run-dev
 docker-run-dev: docker-build
 	docker run $(DOCKER_RUN_OPTS) \
 	   -v $(GOPATH):/go \
@@ -107,8 +118,7 @@ docker-run-dev: docker-build
 		 -e BUILD=$(APP_BUILD) \
 	   $(IMAGE_NAME) $(DOCKER_RUN_CMD)
 
+.PHONY: docker-clean
 docker-clean:
 	rm docker-build
 	docker rmi $(IMAGE_NAME)
-
-.PHONY: vet lint test test-cover clean docs docker-test docker-run docker-run-dev docker-clean
