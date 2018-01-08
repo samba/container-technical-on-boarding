@@ -38,7 +38,7 @@ $(REVEL):
 	go get github.com/revel/cmd/revel
 
 .PHONY: all
-all: vendor lint build test ## Run all targets (vendor, lint, build, test)
+all: clean vendor lint build test ## Run all targets (clean, vendor, lint, build, test)
 
 glide.lock: $(GLIDE) glide.yaml
 	$(GLIDE) update
@@ -81,9 +81,10 @@ coverage.html: $(shell find $(APP_PATH_PKGS) -name '*.go')
 test-cover: coverage.html ## Run test coverage
 
 .PHONY: clean
-clean: ## Clean test artifacgs
+clean: $(REVEL) ## Clean test artifacgs
 	-rm -vf ./coverage.* ./$(APP_NAME)
 	-rm -rf ./test-results/
+	revel clean $(APP_PACKAGE)
 
 godoc.txt: $(shell find ./ -name '*.go')
 	godoc $(APP_PATH) > $@
