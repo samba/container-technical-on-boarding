@@ -78,31 +78,32 @@ If either of the above indicate another IP address, try reaching that on port 90
 
 ### Running Locally (in your desktop)
 
-If somehow you prefer to build and run this in Go on your desktop environment,
+If you prefer to build and run this in Go on your desktop environment,
 rather than a preconfigured Docker container, here's how...
 
 Please ensure that [Go is properly set up](./SETTINGUPGO.md) first.
 
 ```shell
-make setup   # installs dependencies, etc
-make test    # runs Golang unit tests/etc
-make build   # prepares the web app
+make all
 
 # app credentials required
 ONBOARD_CLIENT_ID="{clientid}" \
     ONBOARD_CLIENT_SECRET="{clientsecret}" \
+    ONBOARD_TASKS_FILE="./onboarding-issues.yaml" \
     ONBOARD_REPO="technical-on-boarding" \
     ONBOARD_ORG="samsung-cnct" \
-    VERSION="1.1.0" \
+    VERSION="1.1.3" \
     BUILD="local" \
-    revel run github.com/samsung-cnct/technical-on-boarding
+    revel run github.com/samsung-cnct/container-technical-on-boarding
 ```
+
+*NOTE*: You can get help for the Makefile with `make help`.
 
 This workload relies heavily on the GitHub API, which also requires valid application tokens.
 
-To facilitate testing, this project includes a fairly robust mock of the GitHub API client, and relies on
-interfaces and proxy methods in several other points to allow the business logic to operate against a local
-testing environment without reaching GitHub's API service.
+To facilitate testing, this project includes a fairly robust mock of the GitHub API client, 
+and relies on interfaces and proxy methods in several other points to allow the business 
+logic to operate against a local testing environment without reaching GitHub's API service.
 
 Per Golang's convention, tests are found in files ending with `_test.go`.
 

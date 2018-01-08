@@ -1,3 +1,5 @@
+.DEFAULT_GOAL := help
+
 APP_NAME         = technical-on-boarding
 APP_PACKAGE      = github.com/samsung-cnct/container-technical-on-boarding
 APP_PATH         = ./app
@@ -35,21 +37,19 @@ REVEL := ${GOPATH}/bin/revel
 $(REVEL):
 	go get github.com/revel/cmd/revel
 
-# Development 
-
 .PHONY: all
-all: vendor vet build test
+all: vendor lint build test ## Run all targets (vendor, lint, build, test)
 
 glide.lock: $(GLIDE) glide.yaml
 	$(GLIDE) update
 	@touch $@
 
 .PHONY: vendor
-vendor: glide.lock
+vendor: glide.lock ## Setup vendor dependencies
 	$(GLIDE) install
 
-.PHONY: vet
-vet: $(GOMETALINTER) 
+.PHONY: lint
+lint: $(GOMETALINTER) ## Run lint tools (vet,gofmt,golint,gosimple)
 	$(GOMETALINTER) --install
 	$(GOMETALINTER) --vendored-linters \
 		--disable-all \
@@ -64,13 +64,13 @@ vet: $(GOMETALINTER)
 		$(APP_PATH)/...
 
 .PHONY: build
-build: $(APP_NAME) $(REVEL)
+build: $(APP_NAME) $(REVEL) ## Build the Go app
 
 $(APP_NAME):
 	go build -v $(LDFLAGS) $(APP_PATH_PKGS)
 
 .PHONY: test
-test: vet
+test: lint ## Run unit tests
 	go test -race -v $(APP_PATH_PKGS)
 
 coverage.html: $(shell find $(APP_PATH_PKGS) -name '*.go')
@@ -78,10 +78,10 @@ coverage.html: $(shell find $(APP_PATH_PKGS) -name '*.go')
 	go tool cover -html=coverage.prof -o $@
 
 .PHONY: test-cover
-test-cover: coverage.html
+test-cover: coverage.html ## Run test coverage
 
 .PHONY: clean
-clean:
+clean: ## Clean test artifacgs
 	-rm -vf ./coverage.* ./$(APP_NAME)
 	-rm -rf ./test-results/
 
@@ -89,29 +89,27 @@ godoc.txt: $(shell find ./ -name '*.go')
 	godoc $(APP_PATH) > $@
 
 .PHONY: docs
-docs:  godoc.txt
+docs: godoc.txt ## Generate package documentation
 
-# Docker
-
-docker-build: Dockerfile
+docker-build: Dockerfile ## Build Docker image
 	docker build --pull --force-rm \
 	   --build-arg VERSION=$(APP_VERSION) \
 	   --build-arg BUILD=$(APP_BUILD) \
 	   -t $(IMAGE_NAME) .
 	touch $@
 
-.PHONY: docker-test
-docker-test: docker-build
+.PHONY: docker-test       
+docker-test: docker-build ## Run functional test in container
 	docker run --rm --env-file ./template.env \
 		 $(IMAGE_NAME) \
 		 revel test $(APP_PACKAGE) dev
 
 .PHONY: docker-run
-docker-run: docker-build
+docker-run: docker-build ## Run container
 	docker run $(DOCKER_RUN_OPTS) $(IMAGE_NAME) $(DOCKER_RUN_CMD)
 
 .PHONY: docker-run-dev
-docker-run-dev: docker-build
+docker-run-dev: docker-build ## Run container from local directory
 	docker run $(DOCKER_RUN_OPTS) \
 	   -v $(GOPATH):/go \
 		 -e VERSION=$(APP_VERSION) \
@@ -119,6 +117,10 @@ docker-run-dev: docker-build
 	   $(IMAGE_NAME) $(DOCKER_RUN_CMD)
 
 .PHONY: docker-clean
-docker-clean:
+docker-clean: ## Clean docker image
 	rm docker-build
 	docker rmi $(IMAGE_NAME)
+
+.PHONY: help
+help: ## Display make tasks
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
