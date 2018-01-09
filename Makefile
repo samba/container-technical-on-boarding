@@ -36,8 +36,8 @@ $(GLIDE):
 REVEL := ${GOPATH}/bin/revel
 $(REVEL):
 	go get github.com/revel/cmd/revel
-	cd ${GOPATH}/src/github.com/revel/cmd; git -q checkout v0.17
-	cd ${GOPATH}/src/github.com/revel/revel; git -q checkout v0.17.1
+	cd ${GOPATH}/src/github.com/revel/cmd; git checkout -q v0.17
+	cd ${GOPATH}/src/github.com/revel/revel; git checkout -q v0.17.1
 	go install github.com/revel/cmd/revel
 	$(REVEL) version
 
