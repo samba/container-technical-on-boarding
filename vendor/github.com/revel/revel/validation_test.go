@@ -21,13 +21,11 @@ func getRecordedCookie(recorder *httptest.ResponseRecorder, name string) (*http.
 	}
 	return nil, http.ErrNoCookie
 }
-// r.Original.URL.String()
+
 func validationTester(req *Request, fn func(c *Controller)) *httptest.ResponseRecorder {
 	recorder := httptest.NewRecorder()
-	c := NewTestController(recorder,req.In.GetRaw().(*http.Request))
-	c.Request = req
-
-	ValidationFilter(c, []Filter{I18nFilter, func(c *Controller, _ []Filter) {
+	c := NewController(req, NewResponse(recorder))
+	ValidationFilter(c, []Filter{func(c *Controller, _ []Filter) {
 		fn(c)
 	}})
 	return recorder
@@ -35,7 +33,7 @@ func validationTester(req *Request, fn func(c *Controller)) *httptest.ResponseRe
 
 // Test that errors are encoded into the _ERRORS cookie.
 func TestValidationWithError(t *testing.T) {
-	recorder := validationTester(buildEmptyRequest().Request, func(c *Controller) {
+	recorder := validationTester(buildEmptyRequest(), func(c *Controller) {
 		c.Validation.Required("")
 		if !c.Validation.HasErrors() {
 			t.Fatal("errors should be present")
@@ -52,7 +50,7 @@ func TestValidationWithError(t *testing.T) {
 
 // Test that no cookie is sent if errors are found, but Keep() is not called.
 func TestValidationNoKeep(t *testing.T) {
-	recorder := validationTester(buildEmptyRequest().Request, func(c *Controller) {
+	recorder := validationTester(buildEmptyRequest(), func(c *Controller) {
 		c.Validation.Required("")
 		if !c.Validation.HasErrors() {
 			t.Fatal("errors should not be present")
@@ -66,7 +64,7 @@ func TestValidationNoKeep(t *testing.T) {
 
 // Test that a previously set _ERRORS cookie is deleted if no errors are found.
 func TestValidationNoKeepCookiePreviouslySet(t *testing.T) {
-	req := buildRequestWithCookie("REVEL_ERRORS", "invalid").Request
+	req := buildRequestWithCookie("REVEL_ERRORS", "invalid")
 	recorder := validationTester(req, func(c *Controller) {
 		c.Validation.Required("success")
 		if c.Validation.HasErrors() {
@@ -79,27 +77,4 @@ func TestValidationNoKeepCookiePreviouslySet(t *testing.T) {
 	} else if cookie.MaxAge >= 0 {
 		t.Fatalf("cookie should be deleted")
 	}
-}
-
-func TestValidateMessageKey(t *testing.T) {
-	Init("prod", "github.com/revel/revel/testdata", "")
-	loadMessages(testDataPath)
-
-	// Assert that we have the expected number of languages
-	if len(MessageLanguages()) != 2 {
-		t.Fatalf("Expected messages to contain no more or less than 2 languages, instead there are %d languages", len(MessageLanguages()))
-	}
-	req := buildRequestWithAcceptLanguages("nl").Request
-
-	validationTester(req, func(c *Controller) {
-		c.Validation.Required("").MessageKey("greeting")
-		if msg:=c.Validation.Errors[0].Message; msg!="Hallo" {
-			t.Errorf("Failed expected message Hallo got %s", msg)
-		}
-
-		if !c.Validation.HasErrors() {
-			t.Fatal("errors should not be present")
-		}
-	})
-
 }

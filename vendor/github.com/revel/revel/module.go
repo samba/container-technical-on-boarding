@@ -1,9 +1,6 @@
 package revel
 
 import (
-	"fmt"
-	"github.com/go-stack/stack"
-	"github.com/revel/revel/logger"
 	"go/build"
 	"path/filepath"
 	"sort"
@@ -14,43 +11,22 @@ import (
 type Module struct {
 	Name, ImportPath, Path string
 	ControllerTypeList     []*ControllerType
-	Log                    logger.MultiLogger
-	initializedModules     map[string]ModuleCallbackInterface
 }
-
-// Modules can be called back after they are loaded in revel by using this interface.
-type ModuleCallbackInterface func(*Module)
 
 // The namespace separator constant
 const namespaceSeperator = `\` // (note cannot be . or : as this is already used for routes)
 
 var (
-	Modules   []*Module                                                                                     // The list of modules in use
-	anyModule = &Module{}                                                                                   // Wildcard search for controllers for a module (for backward compatible lookups)
-	appModule = &Module{Name: "App", initializedModules: map[string]ModuleCallbackInterface{}, Log: AppLog} // The app module
-	moduleLog = RevelLog.New("section", "module")
+	Modules   []*Module              // The list of modules in use
+	anyModule = &Module{}            // Wildcard search for controllers for a module (for backward compatible lookups)
+	appModule = &Module{Name: "App"} // The app module
 )
 
-// Called by a module init() function, caller will receive the *Module object created for that module
-// This would be useful for assigning a logger for logging information in the module (since the module context would be correct)
-func RegisterModuleInit(callback ModuleCallbackInterface) {
-	// Store the module that called this so we can do a callback when the app is initialized
-	// The format %+k is from go-stack/Call.Format and returns the package path
-	key := fmt.Sprintf("%+k", stack.Caller(1))
-	appModule.initializedModules[key] = callback
-	if Initialized {
-		RevelLog.Error("Application already initialized, initializing using app module", "key", key)
-		callback(appModule)
-	}
-
-}
 func init() {
 	AddInitEventHandler(func(typeOf int, value interface{}) (responseOf int) {
 		if typeOf == REVEL_BEFORE_MODULES_LOADED {
-			Modules = []*Module{appModule}
-			appModule.Path = AppPath
+			Modules = []*Module{}
 		}
-
 		return
 	})
 }
@@ -85,22 +61,18 @@ func (m *Module) AddController(ct *ControllerType) {
 // Only to be used on initialization
 func ModuleFromPath(path string, addGopathToPath bool) (module *Module) {
 	gopathList := filepath.SplitList(build.Default.GOPATH)
-	// Strip away the vendor folder
-	if i := strings.Index(path, "/vendor/"); i > 0 {
-		path = path[i+len("vendor/"):]
-	}
 
 	// See if the path exists in the module based
 	for i := range Modules {
 		if addGopathToPath {
 			for _, gopath := range gopathList {
-				if strings.Contains(filepath.ToSlash(filepath.Clean(filepath.Join(gopath, "src", path))), Modules[i].Path) {
+				if strings.HasPrefix(gopath+"/src/"+path, Modules[i].Path) {
 					module = Modules[i]
 					break
 				}
 			}
 		} else {
-			if strings.Contains(path, Modules[i].ImportPath) {
+			if strings.HasPrefix(path, Modules[i].Path) {
 				module = Modules[i]
 				break
 			}
@@ -142,7 +114,7 @@ func loadModules() {
 	// Reorder module order by key name, a poor mans sort but at least it is consistent
 	sort.Strings(keys)
 	for _, key := range keys {
-		moduleLog.Debug("Sorted keys", "keys", key)
+		INFO.Println("Sorted keys", key)
 
 	}
 	for _, key := range keys {
@@ -153,7 +125,7 @@ func loadModules() {
 
 		modulePath, err := ResolveImportPath(moduleImportPath)
 		if err != nil {
-			moduleLog.Error("Failed to load module.  Import of path failed", "modulePath", moduleImportPath, "error", err)
+			ERROR.Fatalln("Failed to load module.  Import of", moduleImportPath, "failed:", err)
 		}
 		// Drop anything between module.???.<name of module>
 		subKey := key[len("module."):]
@@ -162,24 +134,14 @@ func loadModules() {
 		}
 		addModule(subKey, moduleImportPath, modulePath)
 	}
-
-	// Modules loaded, now show module path
-	for key, callback := range appModule.initializedModules {
-		if m := ModuleFromPath(key, false); m != nil {
-			callback(m)
-		} else {
-			RevelLog.Error("Callback for non registered module initializing with application module", "modulePath", key)
-			callback(appModule)
-		}
-	}
 }
 
 //
 func addModule(name, importPath, modulePath string) {
 	if _, found := ModuleByName(name); found {
-		moduleLog.Panic("Attempt to import duplicate module %s path %s aborting startup", "name", name, "path", modulePath)
+		ERROR.Panicf("Attempt to import duplicate module %s path %s aborting startup", name, modulePath)
 	}
-	Modules = append(Modules, &Module{Name: name, ImportPath: importPath, Path: modulePath, Log: RootLog.New("module", name)})
+	Modules = append(Modules, &Module{Name: name, ImportPath: importPath, Path: modulePath})
 	if codePath := filepath.Join(modulePath, "app"); DirExists(codePath) {
 		CodePaths = append(CodePaths, codePath)
 		if viewsPath := filepath.Join(modulePath, "app", "views"); DirExists(viewsPath) {
@@ -187,17 +149,16 @@ func addModule(name, importPath, modulePath string) {
 		}
 	}
 
-	moduleLog.Debug("Loaded module ", "module", filepath.Base(modulePath))
+	INFO.Print("Loaded module ", filepath.Base(modulePath))
 
 	// Hack: There is presently no way for the testrunner module to add the
 	// "test" subdirectory to the CodePaths.  So this does it instead.
 	if importPath == Config.StringDefault("module.testrunner", "github.com/revel/modules/testrunner") {
-		joinedPath := filepath.Join(BasePath, "tests")
-		moduleLog.Debug("Found testrunner module, adding `tests` path ", "path", joinedPath)
-		CodePaths = append(CodePaths, joinedPath)
+		INFO.Print("Found testrunner module, adding `tests` path ", filepath.Join(BasePath, "tests"))
+		CodePaths = append(CodePaths, filepath.Join(BasePath, "tests"))
 	}
 	if testsPath := filepath.Join(modulePath, "tests"); DirExists(testsPath) {
-		moduleLog.Debug("Found tests path ", "path", testsPath)
+		INFO.Print("Found tests path ", testsPath)
 		CodePaths = append(CodePaths, testsPath)
 	}
 }

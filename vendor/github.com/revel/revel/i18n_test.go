@@ -98,32 +98,32 @@ func TestI18nMessageWithDefaultLocale(t *testing.T) {
 func TestHasLocaleCookie(t *testing.T) {
 	loadTestI18nConfig(t)
 
-	if found, value := hasLocaleCookie(buildRequestWithCookie("APP_LANG", "en").Request); !found {
+	if found, value := hasLocaleCookie(buildRequestWithCookie("APP_LANG", "en")); !found {
 		t.Errorf("Expected %s cookie with value '%s' but found nothing or unexpected value '%s'", "APP_LANG", "en", value)
 	}
-	if found, value := hasLocaleCookie(buildRequestWithCookie("APP_LANG", "en-US").Request); !found {
+	if found, value := hasLocaleCookie(buildRequestWithCookie("APP_LANG", "en-US")); !found {
 		t.Errorf("Expected %s cookie with value '%s' but found nothing or unexpected value '%s'", "APP_LANG", "en-US", value)
 	}
-	if found, _ := hasLocaleCookie(buildRequestWithCookie("DOESNT_EXIST", "en-US").Request); found {
+	if found, _ := hasLocaleCookie(buildRequestWithCookie("DOESNT_EXIST", "en-US")); found {
 		t.Errorf("Expected %s cookie to not exist, but apparently it does", "DOESNT_EXIST")
 	}
 }
 
 func TestHasLocaleCookieWithInvalidConfig(t *testing.T) {
 	loadTestI18nConfigWithoutLanguageCookieOption(t)
-	if found, _ := hasLocaleCookie(buildRequestWithCookie("APP_LANG", "en-US").Request); found {
+	if found, _ := hasLocaleCookie(buildRequestWithCookie("APP_LANG", "en-US")); found {
 		t.Errorf("Expected %s cookie to not exist because the configured name is missing", "APP_LANG")
 	}
-	if found, _ := hasLocaleCookie(buildRequestWithCookie("REVEL_LANG", "en-US").Request); !found {
+	if found, _ := hasLocaleCookie(buildRequestWithCookie("REVEL_LANG", "en-US")); !found {
 		t.Errorf("Expected %s cookie to exist", "REVEL_LANG")
 	}
 }
 
 func TestHasAcceptLanguageHeader(t *testing.T) {
-	if found, value := hasAcceptLanguageHeader(buildRequestWithAcceptLanguages("en-US").Request); !found && value != "en-US" {
+	if found, value := hasAcceptLanguageHeader(buildRequestWithAcceptLanguages("en-US")); !found && value != "en-US" {
 		t.Errorf("Expected to find Accept-Language header with value '%s', found '%s' instead", "en-US", value)
 	}
-	if found, value := hasAcceptLanguageHeader(buildRequestWithAcceptLanguages("en-GB", "en-US", "nl").Request); !found && value != "en-GB" {
+	if found, value := hasAcceptLanguageHeader(buildRequestWithAcceptLanguages("en-GB", "en-US", "nl")); !found && value != "en-GB" {
 		t.Errorf("Expected to find Accept-Language header with value '%s', found '%s' instead", "en-GB", value)
 	}
 }
@@ -131,17 +131,17 @@ func TestHasAcceptLanguageHeader(t *testing.T) {
 func TestBeforeRequest(t *testing.T) {
 	loadTestI18nConfig(t)
 
-	c := buildEmptyRequest()
+	c := NewController(buildEmptyRequest(), nil)
 	if I18nFilter(c, NilChain); c.Request.Locale != "" {
 		t.Errorf("Expected to find current language '%s' in controller, found '%s' instead", "", c.Request.Locale)
 	}
 
-	c = buildRequestWithCookie("APP_LANG", "en-US")
+	c = NewController(buildRequestWithCookie("APP_LANG", "en-US"), nil)
 	if I18nFilter(c, NilChain); c.Request.Locale != "en-US" {
 		t.Errorf("Expected to find current language '%s' in controller, found '%s' instead", "en-US", c.Request.Locale)
 	}
 
-	c = buildRequestWithAcceptLanguages("en-GB", "en-US")
+	c = NewController(buildRequestWithAcceptLanguages("en-GB", "en-US"), nil)
 	if I18nFilter(c, NilChain); c.Request.Locale != "en-GB" {
 		t.Errorf("Expected to find current language '%s' in controller, found '%s' instead", "en-GB", c.Request.Locale)
 	}
@@ -222,11 +222,10 @@ func loadTestI18nConfigWithUnknowFormatOption(t *testing.T) {
 	Config.Raw().AddOption("DEFAULT", "i18n.unknown_format", "*** %s ***")
 }
 
-func buildRequestWithCookie(name, value string) *Controller {
+func buildRequestWithCookie(name, value string) *Request {
 	httpRequest, _ := http.NewRequest("GET", "/", nil)
-	controller := NewTestController(nil,httpRequest)
-
-	httpRequest.AddCookie(&http.Cookie{
+	request := NewRequest(httpRequest)
+	request.AddCookie(&http.Cookie{
 		Name:       name,
 		Value:      value,
 		Path:       "",
@@ -239,22 +238,20 @@ func buildRequestWithCookie(name, value string) *Controller {
 		Raw:        "",
 		Unparsed:   nil,
 	})
-	return controller
+	return request
 }
 
-func buildRequestWithAcceptLanguages(acceptLanguages ...string) *Controller {
+func buildRequestWithAcceptLanguages(acceptLanguages ...string) *Request {
 	httpRequest, _ := http.NewRequest("GET", "/", nil)
-	controller := NewTestController(nil,httpRequest)
-
-	request := controller.Request
+	request := NewRequest(httpRequest)
 	for _, acceptLanguage := range acceptLanguages {
 		request.AcceptLanguages = append(request.AcceptLanguages, AcceptLanguage{acceptLanguage, 1})
 	}
-	return controller
+	return request
 }
 
-func buildEmptyRequest() *Controller {
+func buildEmptyRequest() *Request {
 	httpRequest, _ := http.NewRequest("GET", "/", nil)
-	controller := NewTestController(nil,httpRequest)
-	return controller
+	request := NewRequest(httpRequest)
+	return request
 }

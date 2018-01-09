@@ -43,9 +43,9 @@ func (j *Job) Run() {
 	defer func() {
 		if err := recover(); err != nil {
 			if revelError := revel.NewErrorFromPanic(err); revelError != nil {
-				jobLog.Error("Job Recovery ", "error", err, "stack", revelError.Stack)
+				revel.ERROR.Print(err, "\n", revelError.Stack)
 			} else {
-				jobLog.Error("Job Recovery ", "error", err, "stack", string(debug.Stack()))
+				revel.ERROR.Print(err, "\n", string(debug.Stack()))
 			}
 		}
 	}()

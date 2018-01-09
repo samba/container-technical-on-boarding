@@ -20,7 +20,7 @@ func TestSessionRestore(t *testing.T) {
 		t.Error("incorrect cookie expire", cookie.Expires)
 	}
 
-	restoredSession := GetSessionFromCookie(GoCookie(*cookie))
+	restoredSession := GetSessionFromCookie(cookie)
 	for k, v := range originSession {
 		if restoredSession[k] != v {
 			t.Errorf("session restore failed session[%s] != %s", k, v)
@@ -36,7 +36,7 @@ func TestSessionExpire(t *testing.T) {
 	for i := 0; i < 3; i++ {
 		cookie = session.Cookie()
 		time.Sleep(time.Second)
-		session = GetSessionFromCookie(GoCookie(*cookie))
+		session = GetSessionFromCookie(cookie)
 	}
 	expectExpire := time.Now().Add(expireAfterDuration)
 	if cookie.Expires.Unix() < expectExpire.Add(-time.Second).Unix() {
@@ -49,7 +49,7 @@ func TestSessionExpire(t *testing.T) {
 	session.SetNoExpiration()
 	for i := 0; i < 3; i++ {
 		cookie = session.Cookie()
-		session = GetSessionFromCookie(GoCookie(*cookie))
+		session = GetSessionFromCookie(cookie)
 	}
 	cookie = session.Cookie()
 	if !cookie.Expires.IsZero() {

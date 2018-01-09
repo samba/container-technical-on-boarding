@@ -31,7 +31,6 @@ var (
 	// All currently loaded message configs.
 	messages            map[string]*config.Config
 	localeParameterName string
-	i18nLog             = RevelLog.New("section", "i18n")
 )
 
 // MessageFunc allows you to override the translation interface.
@@ -62,18 +61,18 @@ func Message(locale, message string, args ...interface{}) string {
 
 	messageConfig, knownLanguage := messages[language]
 	if !knownLanguage {
-		i18nLog.Debugf("Unsupported language for locale '%s' and message '%s', trying default language", locale, message)
+		TRACE.Printf("Unsupported language for locale '%s' and message '%s', trying default language", locale, message)
 
 		if defaultLanguage, found := Config.String(defaultLanguageOption); found {
-			i18nLog.Debugf("Using default language '%s'", defaultLanguage)
+			TRACE.Printf("Using default language '%s'", defaultLanguage)
 
 			messageConfig, knownLanguage = messages[defaultLanguage]
 			if !knownLanguage {
-				i18nLog.Debugf("Unsupported default language for locale '%s' and message '%s'", defaultLanguage, message)
+				WARN.Printf("Unsupported default language for locale '%s' and message '%s'", defaultLanguage, message)
 				return fmt.Sprintf(unknownValueFormat, message)
 			}
 		} else {
-			i18nLog.Warnf("Unable to find default language option (%s); messages for unsupported locales will never be translated", defaultLanguageOption)
+			WARN.Printf("Unable to find default language option (%s); messages for unsupported locales will never be translated", defaultLanguageOption)
 			return fmt.Sprintf(unknownValueFormat, message)
 		}
 	}
@@ -82,12 +81,12 @@ func Message(locale, message string, args ...interface{}) string {
 	// try to resolve message in DEFAULT if it did not find it in the given section.
 	value, err := messageConfig.String(region, message)
 	if err != nil {
-		i18nLog.Warnf("Unknown message '%s' for locale '%s'", message, locale)
+		WARN.Printf("Unknown message '%s' for locale '%s'", message, locale)
 		return fmt.Sprintf(unknownValueFormat, message)
 	}
 
 	if len(args) > 0 {
-		i18nLog.Debugf("Arguments detected, formatting '%s' with %v", value, args)
+		TRACE.Printf("Arguments detected, formatting '%s' with %v", value, args)
 		safeArgs := make([]interface{}, 0, len(args))
 		for _, arg := range args {
 			switch a := arg.(type) {
@@ -126,15 +125,15 @@ func loadMessages(path string) {
 	// Read in messages from the modules. Load the module messges first,
 	// so that it can be override in parent application
 	for _, module := range Modules {
-		i18nLog.Debug("Importing messages from module:", "importpath", module.ImportPath)
+		TRACE.Println("Importing messages from module:", module.ImportPath)
 		if err := Walk(filepath.Join(module.Path, messageFilesDirectory), loadMessageFile); err != nil &&
 			!os.IsNotExist(err) {
-			i18nLog.Error("Error reading messages files from module:", "error", err)
+			ERROR.Println("Error reading messages files from module:", err)
 		}
 	}
 
 	if err := Walk(path, loadMessageFile); err != nil && !os.IsNotExist(err) {
-		i18nLog.Error("Error reading messages files:", "error", err)
+		ERROR.Println("Error reading messages files:", err)
 	}
 }
 
@@ -148,7 +147,8 @@ func loadMessageFile(path string, info os.FileInfo, osError error) error {
 	}
 
 	if matched, _ := regexp.MatchString(messageFilePattern, info.Name()); matched {
-		messageConfig, err := parseMessagesFile(path)
+		var config *config.Config
+		config, err := parseMessagesFile(path)
 		if err != nil {
 			return err
 		}
@@ -156,15 +156,15 @@ func loadMessageFile(path string, info os.FileInfo, osError error) error {
 
 		// If we have already parsed a message file for this locale, merge both
 		if _, exists := messages[locale]; exists {
-			messages[locale].Merge(messageConfig)
-			i18nLog.Debugf("Successfully merged messages for locale '%s'", locale)
+			messages[locale].Merge(config)
+			TRACE.Printf("Successfully merged messages for locale '%s'", locale)
 		} else {
-			messages[locale] = messageConfig
+			messages[locale] = config
 		}
 
-		i18nLog.Debug("Successfully loaded messages from file", "file", info.Name())
+		TRACE.Println("Successfully loaded messages from file", info.Name())
 	} else {
-		i18nLog.Warn("Ignoring file because it did not have a valid extension", "file", info.Name())
+		TRACE.Printf("Ignoring file %s because it did not have a valid extension", info.Name())
 	}
 
 	return nil
@@ -194,18 +194,18 @@ func I18nFilter(c *Controller, fc []Filter) {
 		if locale, found := c.Params.Values[localeParameterName]; found && len(locale[0]) > 0 {
 			setCurrentLocaleControllerArguments(c, locale[0])
 			foundLocale = true
-			i18nLog.Debug("Found locale parameter value: ", "locale", locale[0])
+			TRACE.Printf("Found locale parameter value: %s", locale[0])
 		}
 	}
 	if !foundLocale {
 		if foundCookie, cookieValue := hasLocaleCookie(c.Request); foundCookie {
-			i18nLog.Debug("Found locale cookie value: ", "cookie", cookieValue)
+			TRACE.Printf("Found locale cookie value: %s", cookieValue)
 			setCurrentLocaleControllerArguments(c, cookieValue)
 		} else if foundHeader, headerValue := hasAcceptLanguageHeader(c.Request); foundHeader {
-			i18nLog.Debug("Found Accept-Language header value: ", "header", headerValue)
+			TRACE.Printf("Found Accept-Language header value: %s", headerValue)
 			setCurrentLocaleControllerArguments(c, headerValue)
 		} else {
-			i18nLog.Debug("Unable to find locale in cookie or header, using empty string")
+			TRACE.Println("Unable to find locale in cookie or header, using empty string")
 			setCurrentLocaleControllerArguments(c, "")
 		}
 	}
@@ -232,13 +232,13 @@ func hasAcceptLanguageHeader(request *Request) (bool, string) {
 
 // Determine whether the given request has a valid language cookie value.
 func hasLocaleCookie(request *Request) (bool, string) {
-	if request != nil {
+	if request != nil && request.Cookies() != nil {
 		name := Config.StringDefault(localeCookieConfigKey, CookiePrefix+"_LANG")
 		cookie, err := request.Cookie(name)
 		if err == nil {
-			return true, cookie.GetValue()
+			return true, cookie.Value
 		}
-		i18nLog.Debug("Unable to read locale cookie ", "name", name, "error", err)
+		TRACE.Printf("Unable to read locale cookie with name '%s': %s", name, err.Error())
 	}
 
 	return false, ""

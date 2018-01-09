@@ -13,18 +13,15 @@ import (
 type Field struct {
 	Name       string
 	Error      *ValidationError
-	viewArgs map[string]interface{}
-	controller *Controller
+	renderArgs map[string]interface{}
 }
 
-func NewField(name string, viewArgs map[string]interface{}) *Field {
-	err, _ := viewArgs["errors"].(map[string]*ValidationError)[name]
-	controller,_ := viewArgs["_controller"].(*Controller)
+func NewField(name string, renderArgs map[string]interface{}) *Field {
+	err, _ := renderArgs["errors"].(map[string]*ValidationError)[name]
 	return &Field{
 		Name:       name,
 		Error:      err,
-		viewArgs: viewArgs,
-		controller: controller,
+		renderArgs: renderArgs,
 	}
 }
 
@@ -35,7 +32,7 @@ func (f *Field) ID() string {
 
 // Flash returns the flashed value of this Field.
 func (f *Field) Flash() string {
-	v, _ := f.viewArgs["flash"].(map[string]string)[f.Name]
+	v, _ := f.renderArgs["flash"].(map[string]string)[f.Name]
 	return v
 }
 
@@ -51,7 +48,7 @@ func (f *Field) FlashArray() []string {
 // Value returns the current value of this Field.
 func (f *Field) Value() interface{} {
 	pieces := strings.Split(f.Name, ".")
-	answer, ok := f.viewArgs[pieces[0]]
+	answer, ok := f.renderArgs[pieces[0]]
 	if !ok {
 		return ""
 	}
@@ -73,26 +70,10 @@ func (f *Field) Value() interface{} {
 // ErrorClass returns ErrorCSSClass if this field has a validation error, else empty string.
 func (f *Field) ErrorClass() string {
 	if f.Error != nil {
-		if errorClass, ok := f.viewArgs["ERROR_CLASS"]; ok {
+		if errorClass, ok := f.renderArgs["ERROR_CLASS"]; ok {
 			return errorClass.(string)
 		}
 		return ErrorCSSClass
 	}
 	return ""
-}
-
-// Get the short name and translate it
-func (f *Field) ShortName() string {
-	name := f.Name
-	if i:=strings.LastIndex(name,"."); i>0 {
-		name = name[i+1:]
-	}
-	return f.Translate(name)
-}
-// Translate the text
-func (f *Field) Translate(text string, args...interface{}) string {
-	if f.controller!=nil {
-		text = f.controller.Message(text,args...)
-	}
-	return text
 }

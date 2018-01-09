@@ -91,7 +91,7 @@ func serve(c Static, prefix, filepath string) revel.Result {
 	fname := fpath.Join(basePathPrefix, fpath.FromSlash(filepath))
 	// Verify the request file path is within the application's scope of access
 	if !strings.HasPrefix(fname, basePathPrefix) {
-		c.Log.Warn("Attempted to read file outside of base path", "file", fname)
+		revel.WARN.Printf("Attempted to read file outside of base path: %s", fname)
 		return c.NotFound("")
 	}
 
@@ -99,16 +99,16 @@ func serve(c Static, prefix, filepath string) revel.Result {
 	finfo, err := os.Stat(fname)
 	if err != nil {
 		if os.IsNotExist(err) || err.(*os.PathError).Err == syscall.ENOTDIR {
-			c.Log.Warn("File not found ", "file", fname, "error", err)
+			revel.WARN.Printf("File not found (%s): %s ", fname, err)
 			return c.NotFound("File not found")
 		}
-		c.Log.Error("Error trying to get fileinfo for", "file", fname, "error", err)
+		revel.ERROR.Printf("Error trying to get fileinfo for '%s': %s", fname, err)
 		return c.RenderError(err)
 	}
 
 	// Disallow directory listing
 	if finfo.Mode().IsDir() {
-		c.Log.Warn("Attempted directory listing of ", "dir", fname)
+		revel.WARN.Printf("Attempted directory listing of %s", fname)
 		return c.Forbidden("Directory listing not allowed")
 	}
 
@@ -116,10 +116,10 @@ func serve(c Static, prefix, filepath string) revel.Result {
 	file, err := os.Open(fname)
 	if err != nil {
 		if os.IsNotExist(err) {
-			c.Log.Warn("File not found", "file", fname, "error", err)
+			revel.WARN.Printf("File not found (%s): %s ", fname, err)
 			return c.NotFound("File not found")
 		}
-		c.Log.Error("Error opening", "file", fname, "error", err)
+		revel.ERROR.Printf("Error opening '%s': %s", fname, err)
 		return c.RenderError(err)
 	}
 	return c.RenderFile(file, revel.Inline)

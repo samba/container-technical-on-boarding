@@ -6,12 +6,12 @@ package revel
 
 import (
 	"encoding/json"
-	"errors"
 	"io/ioutil"
 	"mime/multipart"
 	"net/url"
 	"os"
 	"reflect"
+	"errors"
 )
 
 // Params provides a unified view of the request params.
@@ -37,41 +37,41 @@ type Params struct {
 	JSON     []byte                             // JSON data from request body
 }
 
-var paramsLogger = RevelLog.New("section", "params")
-
 // ParseParams parses the `http.Request` params into `revel.Controller.Params`
 func ParseParams(params *Params, req *Request) {
-	params.Query = req.GetQuery()
+	params.Query = req.URL.Query()
 
 	// Parse the body depending on the content type.
 	switch req.ContentType {
 	case "application/x-www-form-urlencoded":
 		// Typical form.
-		var err error
-		if params.Form, err = req.GetForm(); err != nil {
-			paramsLogger.Warn("ParseParams: Error parsing request body", "error", err)
+		if err := req.ParseForm(); err != nil {
+			WARN.Println("Error parsing request body:", err)
+		} else {
+			params.Form = req.Form
 		}
 
 	case "multipart/form-data":
 		// Multipart form.
-		if mp, err := req.GetMultipartForm(); err != nil {
-			paramsLogger.Warn("ParseParams: parsing request body:", "error", err)
+		// TODO: Extract the multipart form param so app can set it.
+		if err := req.ParseMultipartForm(32 << 20 /* 32 MB */); err != nil {
+			WARN.Println("Error parsing request body:", err)
 		} else {
-			params.Form = mp.GetValues()
-			params.Files = mp.GetFiles()
+			params.Form = req.MultipartForm.Value
+			params.Files = req.MultipartForm.File
 		}
 	case "application/json":
 		fallthrough
 	case "text/json":
-		if body := req.GetBody(); body != nil {
-			if content, err := ioutil.ReadAll(body); err == nil {
+		if req.Body != nil {
+			if content, err := ioutil.ReadAll(req.Body); err == nil {
 				// We wont bind it until we determine what we are binding too
 				params.JSON = content
 			} else {
-				paramsLogger.Error("ParseParams: Failed to ready request body bytes", "error", err)
+				ERROR.Println("Failed to ready request body bytes", err)
 			}
 		} else {
-			paramsLogger.Info("ParseParams: Json post received with empty body")
+			INFO.Println("Json post received with empty body")
 		}
 	}
 
@@ -84,11 +84,11 @@ func ParseParams(params *Params, req *Request) {
 func (p *Params) Bind(dest interface{}, name string) {
 	value := reflect.ValueOf(dest)
 	if value.Kind() != reflect.Ptr {
-		paramsLogger.Panic("Bind: revel/params: non-pointer passed to Bind: " + name)
+		panic("revel/params: non-pointer passed to Bind: " + name)
 	}
 	value = value.Elem()
 	if !value.CanSet() {
-		paramsLogger.Panic("Bind: revel/params: non-settable variable passed to Bind: " + name)
+		panic("revel/params: non-settable variable passed to Bind: " + name)
 	}
 
 	// Remove the json from the Params, this will stop the binder from attempting
@@ -105,11 +105,11 @@ func (p *Params) Bind(dest interface{}, name string) {
 func (p *Params) BindJSON(dest interface{}) error {
 	value := reflect.ValueOf(dest)
 	if value.Kind() != reflect.Ptr {
-		paramsLogger.Warn("BindJSON: Not a pointer")
+		WARN.Println("BindJSON not a pointer")
 		return errors.New("BindJSON not a pointer")
 	}
 	if err := json.Unmarshal(p.JSON, dest); err != nil {
-		paramsLogger.Warn("BindJSON: Unable to unmarshal request:", "error", err)
+		WARN.Println("W: bindMap: Unable to unmarshal request:", err)
 		return err
 	}
 	return nil
@@ -140,24 +140,21 @@ func (p *Params) calcValues() url.Values {
 	// order of priority is least to most trusted
 	values := make(url.Values, numParams)
 
-	// ?query string parameters are first
+	// ?query vars first
 	for k, v := range p.Query {
 		values[k] = append(values[k], v...)
 	}
-
-	// form parameters append
+	// form vars overwrite
 	for k, v := range p.Form {
 		values[k] = append(values[k], v...)
 	}
-
-	// :/path parameters overwrite
+	// :/path vars overwrite
 	for k, v := range p.Route {
-		values[k] = v
+		values[k] = append(values[k], v...)
 	}
-
-	// fixed route parameters overwrite
+	// fixed vars overwrite
 	for k, v := range p.Fixed {
-		values[k] = v
+		values[k] = append(values[k], v...)
 	}
 
 	return values
@@ -168,10 +165,18 @@ func ParamsFilter(c *Controller, fc []Filter) {
 
 	// Clean up from the request.
 	defer func() {
+		// Delete temp files.
+		if c.Request.MultipartForm != nil {
+			err := c.Request.MultipartForm.RemoveAll()
+			if err != nil {
+				WARN.Println("Error removing temporary files:", err)
+			}
+		}
+
 		for _, tmpFile := range c.Params.tmpFiles {
 			err := os.Remove(tmpFile.Name())
 			if err != nil {
-				paramsLogger.Warn("ParamsFilter: Could not remove upload temp file:", err)
+				WARN.Println("Could not remove upload temp file:", err)
 			}
 		}
 	}()
