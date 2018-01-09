@@ -6,13 +6,13 @@ import:
 - package: github.com/masterminds/semver
   version: ^1.4.0
 - package: github.com/revel/cron
-  version: ^0.18.0
+  version: 0.17
 - package: github.com/revel/modules
-  version: ^0.18.0
+  version: 0.17
   subpackages:
   - jobs/app/jobs
 - package: github.com/revel/revel
-  version: ^0.18.0
+  version: 0.17.1
   subpackages:
   - testing
 - package: github.com/satori/go.uuid
