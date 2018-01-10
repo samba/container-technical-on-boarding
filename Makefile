@@ -25,14 +25,17 @@ DOCKER_RUN_CMD  ?=
 
 # Build Tools
 
+# resolves to v2.0.3 as of 2018-01-10
 GOMETALINTER := ${GOPATH}/bin/gometalinter.v2
 $(GOMETALINTER):
 	go get -u gopkg.in/alecthomas/gometalinter.v2
 
+# resolves to v0.13.1 as of 2018-01-10
 GLIDE := ${GOPATH}/bin/glide.v0
 $(GLIDE):
 	go get -u gopkg.in/masterminds/glide.v0
 
+# manually pinning to v0.17
 REVEL := ${GOPATH}/bin/revel
 $(REVEL):
 	go get github.com/revel/cmd/revel
@@ -116,7 +119,7 @@ docker-run: docker-build ## Run container
 .PHONY: docker-run-dev
 docker-run-dev: docker-build ## Run container from local directory
 	docker run $(DOCKER_RUN_OPTS) \
-	   -v $(GOPATH):/go \
+	   -v $(PWD):/go/src/$(APP_PACKAGE) \
 		 -e VERSION=$(APP_VERSION) \
 		 -e BUILD=$(APP_BUILD) \
 	   $(IMAGE_NAME) $(DOCKER_RUN_CMD)
