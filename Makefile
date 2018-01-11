@@ -20,7 +20,8 @@ IMAGE_NAME      ?= $(IMAGE_REPO)/$(IMAGE_REPO_ORG)/$(APP_NAME):$(IMAGE_TAG)
 
 LDFLAGS=-ldflags "-X main.Version=${APP_VERSION} -X main.Build=${APP_BUILD}"
 
-DOCKER_RUN_OPTS  =--rm -it -p 9000:9000 --env-file ./.env
+DOCKER_RUN_PORT ?=9000
+DOCKER_RUN_OPTS  =--rm -it -p ${DOCKER_RUN_PORT}:9000 --env-file ./.env
 DOCKER_RUN_CMD  ?=
 
 # Build Tools

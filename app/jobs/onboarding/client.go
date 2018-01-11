@@ -105,3 +105,20 @@ func (auth *AuthEnvironment) GithubUsername() string {
 	}
 	return *githubUser.Login
 }
+
+// IsCollaborator checks if a user is a collaborator for a given owner/repo
+func (auth *AuthEnvironment) IsCollaborator(owner, repo, user string) bool {
+	if auth.AccessToken == nil {
+		log.Printf("Failed call due to no access")
+		return false
+	}
+
+	oauthClient := auth.Config.Client(auth.Context, auth.AccessToken)
+	githubClient := github.NewClient(oauthClient)
+	isCollaborator, _, err := githubClient.Repositories.IsCollaborator(auth.Context, owner, repo, user)
+	if err != nil {
+		log.Printf("Failed to check collorator status: %v", err)
+		return false
+	}
+	return isCollaborator
+}
