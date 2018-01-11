@@ -1,3 +1,5 @@
+.DEFAULT_GOAL := help
+
 APP_NAME         = technical-on-boarding
 APP_PACKAGE      = github.com/samsung-cnct/container-technical-on-boarding
 APP_PATH         = ./app
@@ -18,85 +20,116 @@ IMAGE_NAME      ?= $(IMAGE_REPO)/$(IMAGE_REPO_ORG)/$(APP_NAME):$(IMAGE_TAG)
 
 LDFLAGS=-ldflags "-X main.Version=${APP_VERSION} -X main.Build=${APP_BUILD}"
 
-DOCKER_RUN_OPTS  =--rm -it -p 9000:9000 --env-file ./.env
+DOCKER_RUN_PORT ?=9000
+DOCKER_RUN_OPTS  =--rm -it -p ${DOCKER_RUN_PORT}:9000 --env-file ./.env
 DOCKER_RUN_CMD  ?=
 
-all: vet lint test build
+# Build Tools
 
-build: $(APP_NAME)
+# resolves to v2.0.3 as of 2018-01-10
+GOMETALINTER := ${GOPATH}/bin/gometalinter.v2
+$(GOMETALINTER):
+	go get -u gopkg.in/alecthomas/gometalinter.v2
 
-# TODO: use glide to populate vendored dependencies
+# resolves to v0.13.1 as of 2018-01-10
+GLIDE := ${GOPATH}/bin/glide.v0
+$(GLIDE):
+	go get -u gopkg.in/masterminds/glide.v0
 
-setup:
-	@go version
-	@echo GOPATH IS ${GOPATH}
-	@echo app.version is $(APP_VERSION)+$(APP_BUILD)
-	go get github.com/satori/go.uuid
-	go get -u -fix github.com/google/go-github/github
-	go get gopkg.in/yaml.v2
-	go get golang.org/x/oauth2
+# manually pinning to v0.17
+REVEL := ${GOPATH}/bin/revel
+$(REVEL):
 	go get github.com/revel/cmd/revel
-	go get github.com/revel/revel
-	go get github.com/revel/cron
-	go get github.com/masterminds/semver
+	cd ${GOPATH}/src/github.com/revel/cmd; git checkout -q v0.17
+	cd ${GOPATH}/src/github.com/revel/revel; git checkout -q v0.17.1
+	go install github.com/revel/cmd/revel
+	$(REVEL) version
+
+.PHONY: all
+all: clean vendor lint build test ## Run all targets (clean, vendor, lint, build, test)
+
+glide.lock: $(GLIDE) glide.yaml
+	$(GLIDE) update
+	@touch $@
+
+.PHONY: vendor
+vendor: glide.lock ## Setup vendor dependencies
+	$(GLIDE) install
+
+.PHONY: lint
+lint: $(GOMETALINTER) ## Run lint tools (vet,gofmt,golint,gosimple)
+	$(GOMETALINTER) --install
+	$(GOMETALINTER) --vendored-linters \
+		--disable-all \
+		--enable=vet \
+		--enable=gofmt \
+		--enable=golint \
+		--enable=gosimple \
+		--sort=path \
+		--aggregate \
+		--vendor \
+		--tests \
+		$(APP_PATH)/...
+
+.PHONY: build
+build: $(APP_NAME) $(REVEL) ## Build the Go app
 
 $(APP_NAME):
 	go build -v $(LDFLAGS) $(APP_PATH_PKGS)
 
-test: setup vet lint
+.PHONY: test
+test: lint ## Run unit tests
 	go test -race -v $(APP_PATH_PKGS)
 
 coverage.html: $(shell find $(APP_PATH_PKGS) -name '*.go')
 	go test -covermode=count -coverprofile=coverage.prof $(APP_PATH_PKGS)
 	go tool cover -html=coverage.prof -o $@
 
-test-cover: coverage.html
+.PHONY: test-cover
+test-cover: coverage.html ## Run test coverage
 
-lint: setup
-	go get -u github.com/golang/lint/golint
-	go get -u golang.org/x/tools/cmd/goimports
-	go get -u honnef.co/go/tools/cmd/gosimple
-	gofmt -w -s $(APP_PATH_PKGS)
-	$(GOPATH)/bin/goimports -w $(APP_PATH_PKGS)
-	$(GOPATH)/bin/golint $(APP_PATH_PKGS)
-	$(GOPATH)/bin/gosimple $(APP_PATH_PKGS)
-
-vet:
-	go vet -v -printf=false $(APP_PATH)
-
-clean:
+.PHONY: clean
+clean: $(REVEL) ## Clean test artifacgs
 	-rm -vf ./coverage.* ./$(APP_NAME)
 	-rm -rf ./test-results/
+	revel clean $(APP_PACKAGE)
 
 godoc.txt: $(shell find ./ -name '*.go')
 	godoc $(APP_PATH) > $@
 
-docs:  godoc.txt
+.PHONY: docs
+docs: godoc.txt ## Generate package documentation
 
-docker-build: Dockerfile
+docker-build: Dockerfile ## Build Docker image
 	docker build --pull --force-rm \
 	   --build-arg VERSION=$(APP_VERSION) \
 	   --build-arg BUILD=$(APP_BUILD) \
 	   -t $(IMAGE_NAME) .
-	touch docker-build
+	touch $@
 
-docker-test: docker-build
+.PHONY: docker-test       
+docker-test: docker-build ## Run functional test in container
 	docker run --rm --env-file ./template.env \
 		 $(IMAGE_NAME) \
 		 revel test $(APP_PACKAGE) dev
 
-docker-run: docker-build
+.PHONY: docker-run
+docker-run: docker-build ## Run container
 	docker run $(DOCKER_RUN_OPTS) $(IMAGE_NAME) $(DOCKER_RUN_CMD)
 
-docker-run-dev: docker-build
+.PHONY: docker-run-dev
+docker-run-dev: docker-build ## Run container from local directory
 	docker run $(DOCKER_RUN_OPTS) \
-	   -v $(GOPATH):/go \
+	   -v $(PWD):/go/src/$(APP_PACKAGE) \
 		 -e VERSION=$(APP_VERSION) \
 		 -e BUILD=$(APP_BUILD) \
 	   $(IMAGE_NAME) $(DOCKER_RUN_CMD)
 
-docker-clean:
+.PHONY: docker-clean
+docker-clean: ## Clean docker image
 	rm docker-build
 	docker rmi $(IMAGE_NAME)
 
-.PHONY: vet lint test test-cover setup clean docs docker-test docker-run docker-run-dev docker-clean
+.PHONY: help
+help: ## Display make tasks
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
