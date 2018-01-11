@@ -91,14 +91,24 @@ func (auth *AuthEnvironment) SetupAccessToken(code string) (*oauth2.Token, error
 
 }
 
-// GithubUsername retrives the github username via that git api
-func (auth *AuthEnvironment) GithubUsername() string {
+func (auth *AuthEnvironment) getGithubClient() *github.Client {
 	if auth.AccessToken == nil {
-		return ""
+		log.Printf("Failed call due to no access token")
+		return nil
 	}
 
 	oauthClient := auth.Config.Client(auth.Context, auth.AccessToken)
 	githubClient := github.NewClient(oauthClient)
+	return githubClient
+}
+
+// GithubUsername retrives the github username via that git api
+func (auth *AuthEnvironment) GithubUsername() string {
+	githubClient := auth.getGithubClient()
+	if githubClient == nil {
+		log.Printf("Failed to get github client")
+		return ""
+	}
 	githubUser, _, err := githubClient.Users.Get(auth.Context, "")
 	if err != nil {
 		log.Printf("Failed to get github user: %v", err)
@@ -108,17 +118,34 @@ func (auth *AuthEnvironment) GithubUsername() string {
 
 // IsCollaborator checks if a user is a collaborator for a given owner/repo
 func (auth *AuthEnvironment) IsCollaborator(owner, repo, user string) bool {
-	if auth.AccessToken == nil {
-		log.Printf("Failed call due to no access")
+	githubClient := auth.getGithubClient()
+	if githubClient == nil {
+		log.Printf("Failed to get github client")
 		return false
 	}
-
-	oauthClient := auth.Config.Client(auth.Context, auth.AccessToken)
-	githubClient := github.NewClient(oauthClient)
 	isCollaborator, _, err := githubClient.Repositories.IsCollaborator(auth.Context, owner, repo, user)
 	if err != nil {
 		log.Printf("Failed to check collorator status: %v", err)
 		return false
 	}
 	return isCollaborator
+}
+
+// HasWritePermission checks if a user has write permission for a given owner/repo
+func (auth *AuthEnvironment) HasWritePermission(owner, repo, user string) bool {
+	githubClient := auth.getGithubClient()
+	if githubClient == nil {
+		log.Printf("Failed to get github client")
+		return false
+	}
+	permissionLevel, _, err := githubClient.Repositories.GetPermissionLevel(auth.Context, owner, repo, user)
+	if err != nil {
+		log.Printf("Failed to check user permission level: %v", err)
+		return false
+	}
+	permission := permissionLevel.GetPermission()
+	if permission == "admin" || permission == "write" {
+		return true
+	}
+	return false
 }

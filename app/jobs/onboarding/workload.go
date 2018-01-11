@@ -152,6 +152,14 @@ func (job GenerateProject) Run() {
 		return
 	}
 
+	hasWritePermission := auth.HasWritePermission(setup.GithubOrganization, setup.GithubRepository, username)
+	if !hasWritePermission {
+		errMessage := fmt.Sprintf("The user (%s) does not have write permission on the repo: %s/%s",
+			username, setup.GithubOrganization, setup.GithubRepository)
+		job.New <- jobs.NewError(job.ID, errMessage, errMessage)
+		return
+	}
+
 	title := fmt.Sprintf("Welcome @%s!", username)
 	description := fmt.Sprintf("Let's setup up @%s for success. Here's what we need to cover...", username)
 	dueOn := getMilestoneDueTime(nil)
