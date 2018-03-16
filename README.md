@@ -20,7 +20,7 @@ This container is used by the chart-technical-on-boarding repo, and is part of t
 
 ## Usage
 
-To generate the on boarding tasks go [here](http://technical-on-boarding.kubeme.io) and
+To generate the on boarding tasks go [here](http://technical-on-boarding.cnct.io) and
 follow the instructions. To run a local instance for the purpose of examining and
 experimenting with the source code see [below](#development-and-testing).
 
