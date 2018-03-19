@@ -31,11 +31,6 @@ GOMETALINTER := ${GOPATH}/bin/gometalinter.v2
 $(GOMETALINTER):
 	go get -u gopkg.in/alecthomas/gometalinter.v2
 
-# # resolves to v0.13.1 as of 2018-01-10
-# GLIDE := ${GOPATH}/bin/glide.v0
-# $(GLIDE):
-# 	go get -u gopkg.in/masterminds/glide.v0
-
 DEP := ${GOPATH}/bin/dep
 $(DEP):
 	go get -u github.com/golang/dep/cmd/dep
@@ -52,19 +47,10 @@ $(REVEL):
 .PHONY: all
 all: clean vendor lint build test ## Run all targets (clean, vendor, lint, build, test)
 
-
-# glide.lock: $(GLIDE) glide.yaml
-# 	$(GLIDE) update
-# 	@touch $@
-
 .PHONY: vendor
 vendor: $(DEP) Gopkg.lock Gopkg.toml
 	$(DEP) ensure
 	@touch $@
-
-# .PHONY: vendor
-# vendor: glide.lock ## Setup vendor dependencies
-# 	$(GLIDE) install
 
 .PHONY: lint
 lint: $(GOMETALINTER) ## Run lint tools (vet,gofmt,golint,gosimple)
