@@ -31,10 +31,14 @@ GOMETALINTER := ${GOPATH}/bin/gometalinter.v2
 $(GOMETALINTER):
 	go get -u gopkg.in/alecthomas/gometalinter.v2
 
-# resolves to v0.13.1 as of 2018-01-10
-GLIDE := ${GOPATH}/bin/glide.v0
-$(GLIDE):
-	go get -u gopkg.in/masterminds/glide.v0
+# # resolves to v0.13.1 as of 2018-01-10
+# GLIDE := ${GOPATH}/bin/glide.v0
+# $(GLIDE):
+# 	go get -u gopkg.in/masterminds/glide.v0
+
+DEP := ${GOPATH}/bin/dep
+$(DEP):
+	go get -u github.com/golang/dep/cmd/dep
 
 # manually pinning to v0.17
 REVEL := ${GOPATH}/bin/revel
@@ -48,13 +52,19 @@ $(REVEL):
 .PHONY: all
 all: clean vendor lint build test ## Run all targets (clean, vendor, lint, build, test)
 
-glide.lock: $(GLIDE) glide.yaml
-	$(GLIDE) update
-	@touch $@
+
+# glide.lock: $(GLIDE) glide.yaml
+# 	$(GLIDE) update
+# 	@touch $@
 
 .PHONY: vendor
-vendor: glide.lock ## Setup vendor dependencies
-	$(GLIDE) install
+vendor: $(DEP) Gopkg.lock Gopkg.toml
+	$(DEP) ensure
+	@touch $@
+
+# .PHONY: vendor
+# vendor: glide.lock ## Setup vendor dependencies
+# 	$(GLIDE) install
 
 .PHONY: lint
 lint: $(GOMETALINTER) ## Run lint tools (vet,gofmt,golint,gosimple)
@@ -107,7 +117,7 @@ docker-build: Dockerfile ## Build Docker image
 	   -t $(IMAGE_NAME) .
 	touch $@
 
-.PHONY: docker-test       
+.PHONY: docker-test
 docker-test: docker-build ## Run functional test in container
 	docker run --rm --env-file ./template.env \
 		 $(IMAGE_NAME) \
