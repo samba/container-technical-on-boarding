@@ -39,7 +39,7 @@ type Repository struct {
 	SSHURL           *string          `json:"ssh_url,omitempty"`
 	SVNURL           *string          `json:"svn_url,omitempty"`
 	Language         *string          `json:"language,omitempty"`
-	Fork             *bool            `json:"fork,omitempty"`
+	Fork             *bool            `json:"fork"`
 	ForksCount       *int             `json:"forks_count,omitempty"`
 	NetworkCount     *int             `json:"network_count,omitempty"`
 	OpenIssuesCount  *int             `json:"open_issues_count,omitempty"`
@@ -61,18 +61,16 @@ type Repository struct {
 	License *License `json:"license,omitempty"`
 
 	// Additional mutable fields when creating and editing a repository
-	Private           *bool   `json:"private,omitempty"`
-	HasIssues         *bool   `json:"has_issues,omitempty"`
-	HasWiki           *bool   `json:"has_wiki,omitempty"`
-	HasPages          *bool   `json:"has_pages,omitempty"`
-	HasProjects       *bool   `json:"has_projects,omitempty"`
-	HasDownloads      *bool   `json:"has_downloads,omitempty"`
+	Private           *bool   `json:"private"`
+	HasIssues         *bool   `json:"has_issues"`
+	HasWiki           *bool   `json:"has_wiki"`
+	HasPages          *bool   `json:"has_pages"`
+	HasDownloads      *bool   `json:"has_downloads"`
 	LicenseTemplate   *string `json:"license_template,omitempty"`
 	GitignoreTemplate *string `json:"gitignore_template,omitempty"`
-	Archived          *bool   `json:"archived,omitempty"`
 
 	// Creating an organization repository. Required for non-owners.
-	TeamID *int `json:"team_id,omitempty"`
+	TeamID *int `json:"team_id"`
 
 	// API URLs
 	URL              *string `json:"url,omitempty"`
@@ -405,7 +403,7 @@ type Contributor struct {
 	EventsURL         *string `json:"events_url,omitempty"`
 	ReceivedEventsURL *string `json:"received_events_url,omitempty"`
 	Type              *string `json:"type,omitempty"`
-	SiteAdmin         *bool   `json:"site_admin,omitempty"`
+	SiteAdmin         *bool   `json:"site_admin"`
 	Contributions     *int    `json:"contributions,omitempty"`
 }
 
@@ -985,15 +983,15 @@ func (s *RepositoriesService) RemoveAdminEnforcement(ctx context.Context, owner,
 	return s.client.Do(ctx, req, nil)
 }
 
-// repositoryTopics represents a collection of repository topics.
-type repositoryTopics struct {
-	Names []string `json:"names"`
+// Topics represents a collection of repository topics.
+type Topics struct {
+	Names []string `json:"names,omitempty"`
 }
 
 // ListAllTopics lists topics for a repository.
 //
 // GitHub API docs: https://developer.github.com/v3/repos/#list-all-topics-for-a-repository
-func (s *RepositoriesService) ListAllTopics(ctx context.Context, owner, repo string) ([]string, *Response, error) {
+func (s *RepositoriesService) ListAllTopics(ctx context.Context, owner, repo string) (*Topics, *Response, error) {
 	u := fmt.Sprintf("repos/%v/%v/topics", owner, repo)
 	req, err := s.client.NewRequest("GET", u, nil)
 	if err != nil {
@@ -1003,27 +1001,21 @@ func (s *RepositoriesService) ListAllTopics(ctx context.Context, owner, repo str
 	// TODO: remove custom Accept header when this API fully launches.
 	req.Header.Set("Accept", mediaTypeTopicsPreview)
 
-	topics := new(repositoryTopics)
+	topics := new(Topics)
 	resp, err := s.client.Do(ctx, req, topics)
 	if err != nil {
 		return nil, resp, err
 	}
 
-	return topics.Names, resp, nil
+	return topics, resp, nil
 }
 
 // ReplaceAllTopics replaces topics for a repository.
 //
 // GitHub API docs: https://developer.github.com/v3/repos/#replace-all-topics-for-a-repository
-func (s *RepositoriesService) ReplaceAllTopics(ctx context.Context, owner, repo string, topics []string) ([]string, *Response, error) {
+func (s *RepositoriesService) ReplaceAllTopics(ctx context.Context, owner, repo string, topics *Topics) (*Topics, *Response, error) {
 	u := fmt.Sprintf("repos/%v/%v/topics", owner, repo)
-	t := &repositoryTopics{
-		Names: topics,
-	}
-	if t.Names == nil {
-		t.Names = []string{}
-	}
-	req, err := s.client.NewRequest("PUT", u, t)
+	req, err := s.client.NewRequest("PUT", u, topics)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -1031,46 +1023,11 @@ func (s *RepositoriesService) ReplaceAllTopics(ctx context.Context, owner, repo 
 	// TODO: remove custom Accept header when this API fully launches.
 	req.Header.Set("Accept", mediaTypeTopicsPreview)
 
-	t = new(repositoryTopics)
+	t := new(Topics)
 	resp, err := s.client.Do(ctx, req, t)
 	if err != nil {
 		return nil, resp, err
 	}
 
-	return t.Names, resp, nil
-}
-
-// TransferRequest represents a request to transfer a repository.
-type TransferRequest struct {
-	NewOwner string `json:"new_owner"`
-	TeamID   []int  `json:"team_id,omitempty"`
-}
-
-// Transfer transfers a repository from one account or organization to another.
-//
-// This method might return an *AcceptedError and a status code of
-// 202. This is because this is the status that GitHub returns to signify that
-// it has now scheduled the transfer of the repository in a background task.
-// A follow up request, after a delay of a second or so, should result
-// in a successful request.
-//
-// GitHub API docs: https://developer.github.com/v3/repos/#transfer-a-repository
-func (s *RepositoriesService) Transfer(ctx context.Context, owner, repo string, transfer TransferRequest) (*Repository, *Response, error) {
-	u := fmt.Sprintf("repos/%v/%v/transfer", owner, repo)
-
-	req, err := s.client.NewRequest("POST", u, &transfer)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	// TODO: remove custom Accept header when this API fully launches.
-	req.Header.Set("Accept", mediaTypeRepositoryTransferPreview)
-
-	r := new(Repository)
-	resp, err := s.client.Do(ctx, req, r)
-	if err != nil {
-		return nil, resp, err
-	}
-
-	return r, resp, nil
+	return t, resp, nil
 }
