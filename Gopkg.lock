@@ -59,9 +59,22 @@
 
 [[projects]]
   name = "github.com/revel/modules"
-  packages = ["jobs/app/jobs"]
-  revision = "8c55c9a970cf5062eeb0368e809d6f27cffc28b0"
-  version = "v0.17"
+#  packages = ["jobs/app/jobs"]
+#  revision = "8c55c9a970cf5062eeb0368e809d6f27cffc28b0"
+  packages = [
+    "jobs/app/jobs",
+    "testrunner",
+    "testrunner/app",
+    "testrunner/app/controllers",
+    "testrunner/app/views/TestRunner",
+    "testrunner/conf",
+    "testrunner/public/css",
+    "testrunner/public/images",
+    "testrunner/public/js",
+    "static/app/controllers"
+  ]
+#  version = "v0.17"
+  branch = "release/v0.17"
 
 [[projects]]
   branch = "master"
@@ -70,13 +83,13 @@
   revision = "41257a1839e945fce74afd070e02bab2ea2c776a"
 
 [[projects]]
+  branch = "release/v0.17"
   name = "github.com/revel/revel"
   packages = [
     ".",
     "testing"
   ]
-  revision = "6c8d554fd50278abe4a1c8ad50b811728d5f2a49"
-  version = "v0.17.1"
+  revision = "3399fda63860da5fab912ff89430be46d6485cab"
 
 [[projects]]
   name = "github.com/satori/go.uuid"
@@ -122,10 +135,10 @@
   revision = "5bee14b453b4c71be47ec1781b0fa61c2ea182db"
 
 [[projects]]
-  name = "gopkg.in/fsnotify.v1"
+  name = "gopkg.in/fsnotify/fsnotify.v1"
   packages = ["."]
-  revision = "629574ca2a5df945712d3079857300b5e4da0236"
-  version = "v1.4.2"
+  revision = "c2828203cd70a50dcccfb2761f8b1f8ceef9a8e9"
+  version = "v1.4.7"
 
 [[projects]]
   name = "gopkg.in/yaml.v2"
@@ -135,6 +148,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "5b0f61273b69c90f162b87940943b9c4182a94f77c4fe09a5885372ca94f49d9"
+  inputs-digest = "010848af029f88860f786059ba39fae23ad1c004075df69a73428ff2bcee9a46"
   solver-name = "gps-cdcl"
   solver-version = 1
