@@ -108,13 +108,15 @@ type (
 )
 
 // NOTE: this reflects a business process assumption.
-// Target 3 weeks (rounding up) for onboarding completion.
+// Target 3 weeks (rounding up) for onboarding completion, ending on Fridays.
 // New hires starting on Mondays will effectively get 4 weeks.
 func getMilestoneDueTime(fromTime *time.Time) time.Time {
 	if fromTime == nil {
 		now := time.Now()
 		fromTime = &now
 	}
+
+	// NB: if `fromTime` is a Saturday, this will be (-1).
 	offset := (time.Friday - fromTime.Weekday())
 	return fromTime.AddDate(0, 0, 21+int(offset))
 }
