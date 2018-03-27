@@ -31,30 +31,26 @@ GOMETALINTER := ${GOPATH}/bin/gometalinter.v2
 $(GOMETALINTER):
 	go get -u gopkg.in/alecthomas/gometalinter.v2
 
-# resolves to v0.13.1 as of 2018-01-10
-GLIDE := ${GOPATH}/bin/glide.v0
-$(GLIDE):
-	go get -u gopkg.in/masterminds/glide.v0
+DEP := ${GOPATH}/bin/dep
+$(DEP):
+	go get -u github.com/golang/dep/cmd/dep
 
 # manually pinning to v0.17
 REVEL := ${GOPATH}/bin/revel
 $(REVEL):
-	go get github.com/revel/cmd/revel
+	go get -d github.com/revel/cmd/revel
 	cd ${GOPATH}/src/github.com/revel/cmd; git checkout -q v0.17
-	cd ${GOPATH}/src/github.com/revel/revel; git checkout -q v0.17.1
+	cd ${GOPATH}/src/github.com/revel/revel; git checkout -q release/v0.17
 	go install github.com/revel/cmd/revel
 	$(REVEL) version
 
 .PHONY: all
-all: clean vendor lint build test ## Run all targets (clean, vendor, lint, build, test)
-
-glide.lock: $(GLIDE) glide.yaml
-	$(GLIDE) update
-	@touch $@
+all: vendor lint build test ## Run all targets (clean, vendor, lint, build, test)
 
 .PHONY: vendor
-vendor: glide.lock ## Setup vendor dependencies
-	$(GLIDE) install
+vendor: $(DEP) Gopkg.lock Gopkg.toml
+	$(DEP) ensure
+	@touch $@
 
 .PHONY: lint
 lint: $(GOMETALINTER) ## Run lint tools (vet,gofmt,golint,gosimple)
@@ -89,7 +85,7 @@ coverage.html: $(shell find $(APP_PATH_PKGS) -name '*.go')
 test-cover: coverage.html ## Run test coverage
 
 .PHONY: clean
-clean: $(REVEL) ## Clean test artifacgs
+clean: $(REVEL) ## Clean test artifacts
 	-rm -vf ./coverage.* ./$(APP_NAME)
 	-rm -rf ./test-results/
 	revel clean $(APP_PACKAGE)
@@ -107,7 +103,7 @@ docker-build: Dockerfile ## Build Docker image
 	   -t $(IMAGE_NAME) .
 	touch $@
 
-.PHONY: docker-test       
+.PHONY: docker-test
 docker-test: docker-build ## Run functional test in container
 	docker run --rm --env-file ./template.env \
 		 $(IMAGE_NAME) \
