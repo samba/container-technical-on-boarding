@@ -15,6 +15,7 @@ type (
 		Title       string
 		Assignee    indirectAssignee `yaml:"assignee"`
 		Description string           `yaml:"description,omitempty"`
+		Tags        []string         `yaml:"tags,omitempty"` //TODO: add all the tags and determine if omitempty is what we want"
 	}
 
 	indirectAssignee struct {

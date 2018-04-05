@@ -1,0 +1,40 @@
+{{set . "title" "Home"}}
+{{template "header.html" .}}
+
+<div class="container theme-showcase" role="main">
+
+<header class="jumbotron" style="background-color:#80f2db">
+  <div class="container">
+    <div class="row">
+      <h1>Choose your Onboarding Track</h1>
+      <p>We have several different onboarding tracks, each tailored to different users' needs.</p>
+    </div>
+  </div>
+</header>
+
+<div class="page-header">
+  <h1>Instructions</h1>
+</div>
+
+<p>
+    Please choose from the following learning tracks. You may select more than one.
+</p>
+
+<form action="/workload" method="GET">
+    <input type="checkbox" name="appDev" value="app_dev"/> I'm an application developer<br/>
+    <input type="checkbox" name="clusterOp" value="cluster_op" /> I'm a cluster operator<br/>
+    <input type="checkbox" name="cnctHire" value="cnct_hire"/> I'm a new hire at CNCT<br/>
+    <input type="submit" value="Submit" />
+</form>
+
+<div class="container">
+  <div class="row">
+    <div class="span6">
+      {{template "flash.html" .}}
+    </div>
+  </div>
+</div>
+
+</div>
+
+{{template "footer.html" .}}

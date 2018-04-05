@@ -128,6 +128,7 @@ type GenerateProject struct {
 	Setup   *SetupScheme
 	AuthEnv *AuthEnvironment
 	New     chan<- jobs.Event
+	Tracks  []string
 }
 
 // Run implements the required cron.Job interface for revel job execution
@@ -136,6 +137,9 @@ func (job GenerateProject) Run() {
 	auth := job.AuthEnv
 	username := auth.GithubUsername()
 	client, _ := auth.newWorkflowClient()
+	tracks := job.Tracks
+
+	// TODO = read these somewhere track := job.Setup.Tasks[0].Tags
 
 	defer close(job.New)
 	job.New <- jobs.NewEvent(job.ID, "start", fmt.Sprintf("Starting project generation as %v", username))
@@ -187,20 +191,24 @@ func (job GenerateProject) Run() {
 	}
 
 	for _, task := range setup.Tasks {
-		job.New <- jobs.NewEvent(job.ID, "progress", fmt.Sprintf("Preparing Issue - %s", task.Title))
-		issue, err := repo.CreateOrUpdateIssue(&task.Assignee.GithubUsername, &task.Title, &task.Description, milestone.GetNumber())
-		if err != nil {
-			job.New <- jobs.NewError(job.ID, fmt.Sprintf("Failed to create issue - %s", task.Title), err.Error())
-			return
+		for _, tag := range task.Tags {
+			fmt.Println(tag)
+			// TODO: get app-dev dynamically.
+			if CheckTracks(tracks, tag) {
+				job.New <- jobs.NewEvent(job.ID, "progress", fmt.Sprintf("Preparing Issue - %s", task.Title))
+				issue, err := repo.CreateOrUpdateIssue(&task.Assignee.GithubUsername, &task.Title, &task.Description, milestone.GetNumber())
+				if err != nil {
+					job.New <- jobs.NewError(job.ID, fmt.Sprintf("Failed to create issue - %s", task.Title), err.Error())
+					return
+				}
+				// NOTE: this fails with HTTP 422 when the the issue already has a card in the project.
+				_, err = repo.CreateCardForIssue(issue, columns["Backlog"])
+				if err != nil {
+					job.New <- jobs.NewError(job.ID, fmt.Sprintf("Error creating card - %v", err), err.Error())
+					// DO NOT return here.
+				}
+			}
 		}
-
-		// NOTE: this fails with HTTP 422 when the the issue already has a card in the project.
-		_, err = repo.CreateCardForIssue(issue, columns["Backlog"])
-		if err != nil {
-			job.New <- jobs.NewError(job.ID, fmt.Sprintf("Error creating card - %v", err), err.Error())
-			// DO NOT return here.
-		}
-
 	}
 
 	//https://github.com/alika/test-toby/projects
@@ -709,4 +717,14 @@ func (repo *WorkflowRepository) ColumnsPresent(project *github.Project, columns 
 	}
 
 	return (countMissing < 1), nil
+}
+
+// CheckTracks checks if a track tag exists in the slice the user passed down
+func CheckTracks(tracks []string, inputTrack string) bool {
+	for _, track := range tracks {
+		if track == inputTrack {
+			return true
+		}
+	}
+	return false
 }
