@@ -28,6 +28,7 @@ type (
 		ClientSecret       string                      `yaml:"clientSecret"`
 		GithubOrganization string                      `yaml:"githubOrganization"`
 		GithubRepository   string                      `yaml:"githubRepository"`
+		GitHubEndpoint     string                      `yaml:"githubEndpoint"`
 		Tasks              []TaskEntry                 `yaml:"tasks"`
 		TaskOwners         map[string]indirectAssignee `yaml:"task_owners"`
 	}

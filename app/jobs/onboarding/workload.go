@@ -136,7 +136,7 @@ func (job GenerateProject) Run() {
 	setup := job.Setup
 	auth := job.AuthEnv
 	username := auth.GithubUsername()
-	client, _ := auth.newWorkflowClient()
+	client, _ := auth.newWorkflowClient(setup.GitHubEndpoint)
 	tracks := job.Tracks
 
 	// TODO = read these somewhere track := job.Setup.Tasks[0].Tags

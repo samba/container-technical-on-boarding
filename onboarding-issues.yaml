@@ -1,5 +1,5 @@
 
-
+githubEndpoint: "{{ index .Environ "onboard.client.endpoint" }}"
 githubOrganization: "{{ index .Environ "onboard.org" }}"
 githubRepository: "{{ index .Environ "onboard.repo" }}"
 clientId: "{{ index .Environ "onboard.client.id" }}"

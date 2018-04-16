@@ -11,6 +11,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"net/url"
 
 	"github.com/google/go-github/github"
 	uuid "github.com/satori/go.uuid"
@@ -63,7 +64,8 @@ func (auth *AuthEnvironment) AuthCodeURL() string {
 	return url
 }
 
-func (auth *AuthEnvironment) newWorkflowClient() (*WorkflowClient, error) {
+func (auth *AuthEnvironment) newWorkflowClient(endpointURL string) (*WorkflowClient, error) {
+
 	if auth.workflowClient != nil {
 		return auth.workflowClient, nil
 	}
@@ -74,6 +76,14 @@ func (auth *AuthEnvironment) newWorkflowClient() (*WorkflowClient, error) {
 
 	oauthClient := auth.Config.Client(auth.Context, auth.AccessToken)
 	githubClient := github.NewClient(oauthClient)
+
+	// Let's pretend it's a valid URL. If not, we ignore it below.
+	endpoint, err := url.Parse(endpointURL)
+
+	if len(endpointURL) > 0 && err == nil { // Evidently the URL was valid.
+		githubClient.BaseURL = endpoint
+	}
+
 	workflow := WorkflowClient{auth.Context, NewGitHubWrapper(githubClient)}
 	return &workflow, nil
 }

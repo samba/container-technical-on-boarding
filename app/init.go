@@ -68,6 +68,7 @@ var HeaderFilter = func(c *revel.Controller, fc []revel.Filter) {
 const (
 	OnboardClientIDName     string = "onboard.client.id"
 	OnboardClientSecretName string = "onboard.client.secret"
+	OnboardClientEndpoint   string = "onboard.client.endpoint"
 	OnboardOrgName          string = "onboard.org"
 	OnboardRepoName         string = "onboard.repo"
 	OnboardTasksFileName    string = "onboard.tasks.file"
