@@ -28,12 +28,6 @@ func (c App) Index() revel.Result {
 	return c.Render()
 }
 
-// GetTrack gets form input
-func (c App) GetTrack(mytrack string) revel.Result {
-	revel.INFO.Printf("The track %s was chosen.", mytrack)
-	return c.Render(mytrack)
-}
-
 // Auth initiates the oauth2 authorization request to github
 func (c App) Auth() revel.Result {
 	user := c.currentUser()
@@ -73,33 +67,56 @@ func (c App) AuthCallback() revel.Result {
 	user.Username = auth.GithubUsername()
 
 	revel.INFO.Printf("Successfully authenticated Github user: %s\n", user.Username)
-	return c.Redirect("/tracks") //TODO: redirect to Tracks
+	return c.Redirect("/tracks")
 }
 
-// Workload handles the initial workload page rendering
-func (c App) Workload(appDev, clusterOp, cnctHire string) revel.Result {
-	revel.INFO.Printf("The following tracks were chosen: %s, %s, %s", appDev, clusterOp, cnctHire)
+// Workload handles the initial workload page rendering, reads tracks chosen in form and assigns to current user
+func (c App) Workload() revel.Result {
 	user := c.currentUser()
+	if err := c.Request.ParseForm(); err != nil {
+		revel.ERROR.Printf("Form not parsed correctly")
+	}
 	var tracks []string
-	tracks = append(tracks, appDev, clusterOp, cnctHire)
+	for _, track := range user.AvailableTracks {
+		if c.Params.Form.Get(track) != "" {
+			tracks = append(tracks, track)
+		}
+	}
 	user.Tracks = tracks
 	if user == nil {
 		revel.ERROR.Printf("User not setup correctly")
 		return c.Redirect("/")
 	}
-
-	return c.Render(user, tracks)
+	return c.Render(user)
 }
 
-// Tracks handles the initial track choice rendering
+// Tracks handles the rendering of track choices available and assigns them to current user
 func (c App) Tracks() revel.Result {
 	user := c.currentUser()
 	if user == nil {
 		revel.ERROR.Printf("User not setup correctly")
 		return c.Redirect("/")
 	}
-
+	user.AvailableTracks = c.GetTracks()
 	return c.Render(user)
+}
+
+// GetTracks finds all available tracks from setup scheme information
+func (c App) GetTracks() []string {
+	taskList := app.Setup.Tasks
+	checkTracks := make(map[string]bool)
+	var possibleTracks []string
+	for _, task := range taskList {
+		for _, tag := range task.Tags {
+			// If tags are not already in collection, append to possibleTracks
+			_, ok := checkTracks[tag]
+			if !ok {
+				checkTracks[tag] = true
+				possibleTracks = append(possibleTracks, tag)
+			}
+		}
+	}
+	return possibleTracks
 }
 
 // WorkloadSocket handles the websocket connection for workload events
