@@ -47,6 +47,8 @@ func (c App) AuthCallback() revel.Result {
 	user := c.currentUser()
 	if user == nil {
 		revel.ERROR.Println("Invalid OAuth Callback")
+		c.Flash.Error("Invalid OAuth Callback (invalid user identity)")
+		c.FlashParams()
 		return c.Redirect("/")
 	}
 
@@ -55,6 +57,8 @@ func (c App) AuthCallback() revel.Result {
 	userState := auth.StateString
 	if state != userState {
 		revel.ERROR.Printf("Invalid OAuth State, expected '%s', got '%s'\n", userState, state)
+		c.Flash.Error("Invalid OAuth State, expected '%s', got '%s'\n", userState, state)
+		c.FlashParams()
 		return c.Redirect("/")
 	}
 
@@ -62,6 +66,8 @@ func (c App) AuthCallback() revel.Result {
 	_, err := auth.SetupAccessToken(code)
 	if err != nil {
 		revel.ERROR.Printf("Could not get access token for user: %v", err)
+		c.Flash.Error("Failed to fetch user token: %v", err)
+		c.FlashParams()
 		return c.Redirect("/")
 	}
 	user.Username = auth.GithubUsername()
@@ -73,20 +79,27 @@ func (c App) AuthCallback() revel.Result {
 // Workload handles the initial workload page rendering, reads tracks chosen in form and assigns to current user
 func (c App) Workload() revel.Result {
 	user := c.currentUser()
+
+	if user == nil {
+		revel.ERROR.Printf("User not setup correctly")
+		c.Flash.Error("User not set up correctly")
+		c.FlashParams()
+		return c.Redirect("/")
+	}
+
 	if err := c.Request.ParseForm(); err != nil {
 		revel.ERROR.Printf("Form not parsed correctly")
 	}
+
 	var tracks []string
 	for _, track := range user.AvailableTracks {
 		if c.Params.Form.Get(track) != "" {
 			tracks = append(tracks, track)
 		}
 	}
-	user.Tracks = tracks
-	if user == nil {
-		revel.ERROR.Printf("User not setup correctly")
-		return c.Redirect("/")
-	}
+
+	user.Tracks = tracks // Selected tracks
+
 	return c.Render(user)
 }
 

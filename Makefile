@@ -65,6 +65,8 @@ lint: $(GOMETALINTER) ## Run lint tools (vet,gofmt,golint,gosimple)
 		--aggregate \
 		--vendor \
 		--tests \
+		--skip=app/tmp \
+		--skip=app/routes \
 		$(APP_PATH)/...
 
 .PHONY: build
@@ -73,9 +75,23 @@ build: $(APP_NAME) $(REVEL) ## Build the Go app
 $(APP_NAME):
 	go build -v $(LDFLAGS) $(APP_PATH_PKGS)
 
+.PHONY: revel-build
+revel-build: /tmp/build/$(APP_NAME) 
+
+/tmp/build/$(APP_NAME): $(shell find ./app/ -type f)  | $(REVEL)
+	mkdir -p $$(dirname $@)
+	$(REVEL) build $(APP_PACKAGE) $@ prod
+
+
 .PHONY: test
 test: lint ## Run unit tests
 	go test -race -v $(APP_PATH_PKGS)
+	$(MAKE) revel-test
+
+.PHONY: revel-test
+revel-test:  $(REVEL)  | revel-build
+	ONBOARD_CLIENT_ID=test ONBOARD_CLIENT_SECRET=test ONBOARD_ORG=test ONBOARD_REPO=test ONBOARD_TASKS_FILE=onboarding-issues.yaml \
+		$(REVEL) test $(APP_PACKAGE) dev
 
 coverage.html: $(shell find $(APP_PATH_PKGS) -name '*.go')
 	go test -covermode=count -coverprofile=coverage.prof $(APP_PATH_PKGS)
