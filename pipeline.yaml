@@ -1,0 +1,29 @@
+type: chart
+rootfs:
+  - image: samsung_cnct/technical-on-boarding-container
+    buildArgs: 
+      - arg: VERSION
+        value: 1.1.7
+      - arg: BUILD
+        env: GIT_COMMIT
+    context: technical-on-boarding-container
+    dockerContext: .
+    chart: technical-on-boarding
+    value: image
+configs:
+  - chart: technical-on-boarding
+    timeout: 600
+    retries: 1
+    release: onboarding
+    test: 
+      values:
+        - key: ingress
+          value: "false"
+    stage: 
+      values:
+        - key: ingress
+          value: "false"  
+prod: 
+  doDeploy: none
+
+ 

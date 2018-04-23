@@ -1,0 +1,14 @@
+name: technical-on-boarding
+version: 1.1.7
+description: Technical On-boarding chart
+keywords:
+- kraken
+- on-boarding
+home: https://github.com/samsung-cnct/chart-technical-on-boarding
+sources:
+- https://github.com/samsung-cnct/chart-technical-on-boarding
+maintainers:
+- name: Samsung CNCT
+  email: samsung.cloudnative@gmail.com
+icon: https://github.com/samsung-cnct/solas/docs/images/samsung-logo.svg
+engine: gotpl

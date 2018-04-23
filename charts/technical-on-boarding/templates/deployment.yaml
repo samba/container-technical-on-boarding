@@ -1,0 +1,51 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: {{ template "fullname" . }}
+  labels:
+    app: {{ template "name" . }}
+    chart: {{ printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 }}
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+spec:
+  replicas: 1
+  template:
+    metadata:
+      name: {{ template "fullname" . }}
+      labels:
+        app: {{ template "name" . }}
+        release: "{{ .Release.Name }}"
+    spec:
+      containers:
+      - name: {{ template "fullname" . }}
+        image: "{{.Values.image}}"
+        imagePullPolicy: "Always"
+        ports:
+        - containerPort: 9000
+        readinessProbe:
+          httpGet:
+            path: /version
+            port: 9000
+          initialDelaySeconds: 15
+          timeoutSeconds: 1
+        env:
+        - name: ONBOARD_CLIENT_ID
+          valueFrom:
+            secretKeyRef:
+              name: {{ template "fullname" . }}
+              key: ONBOARD_CLIENT_ID
+        - name: ONBOARD_CLIENT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: {{ template "fullname" . }}
+              key: ONBOARD_CLIENT_SECRET
+        - name: ONBOARD_ORG
+          valueFrom:
+            configMapKeyRef:
+              name: {{ template "fullname" . }}
+              key: ONBOARD_ORG
+        - name: ONBOARD_REPO
+          valueFrom:
+            configMapKeyRef:
+              name: {{ template "fullname" . }}
+              key: ONBOARD_REPO
