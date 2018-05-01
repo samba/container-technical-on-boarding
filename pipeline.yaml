@@ -21,10 +21,30 @@ configs:
       values:
         - key: ingress
           value: "false"  
+        - key: onboard.org
+          secret: jobs/onboarding/github-org/stage
+        - key: onboard.repo
+          secret: jobs/onboarding/github-repo/stage
+        - key: onboard.clientId
+          secret: jobs/onboarding/github-app-client-id/stage
+        - key: onboard.clientSecret
+          secret: jobs/onboarding/github-app-client-secret/stage
+    prod:
+      values:
+        - key: ingress
+          value: "false"  
+        - key: onboard.org
+          secret: jobs/onboarding/github-org/prod
+        - key: onboard.repo
+          secret: jobs/onboarding/github-repo/prod
+        - key: onboard.clientId
+          secret: jobs/onboarding/github-app-client-id/prod
+        - key: onboard.clientSecret
+          secret: jobs/onboarding/github-app-client-secret/prod
 
 stage:
   deploy: true
 prod: 
-  doDeploy: none
+  doDeploy: versionfile
 
  
