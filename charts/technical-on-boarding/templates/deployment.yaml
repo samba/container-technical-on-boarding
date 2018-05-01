@@ -18,7 +18,7 @@ spec:
     spec:
       containers:
       - name: {{ template "fullname" . }}
-        image: "{{.Values.image}}"
+        image: "{{.Values.image}}" 
         imagePullPolicy: "Always"
         ports:
         - containerPort: 9000
@@ -29,6 +29,8 @@ spec:
           initialDelaySeconds: 15
           timeoutSeconds: 1
         env:
+        - name: VERSION
+          value: {{ .Chart.Version }} 
         - name: ONBOARD_CLIENT_ID
           valueFrom:
             secretKeyRef:
