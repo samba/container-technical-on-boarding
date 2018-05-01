@@ -41,6 +41,11 @@ spec:
             secretKeyRef:
               name: {{ template "fullname" . }}
               key: ONBOARD_CLIENT_SECRET
+        - name: ONBOARD_CLIENT_ENDPOINT
+          valueFrom:
+            configMapKeyRef:
+              name: {{ template "fullname" . }}
+              key: ONBOARD_CLIENT_ENDPOINT
         - name: ONBOARD_ORG
           valueFrom:
             configMapKeyRef:

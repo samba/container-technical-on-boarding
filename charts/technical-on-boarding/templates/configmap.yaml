@@ -10,3 +10,8 @@ metadata:
 data:
   ONBOARD_ORG: {{.Values.onboard.org}}
   ONBOARD_REPO: {{.Values.onboard.repo}}
+  {{- if ne .Values.onboard.clientEndpoint ""}}
+  ONBOARD_CLIENT_ENDPOINT: {{.Values.onboard.clientEndpoint}}
+  {{- else }}
+  ONBOARD_CLIENT_ENDPOINT: ""  # Blank => default https://api.github.com
+  {{- end}}

@@ -12,3 +12,4 @@ onboard:
   repo: technical-on-boarding #home for new issues created
   clientId: REPLACE
   clientSecret: REPLACE
+  clientEndpoint: ""  # alternate GitHub API, default https://api.github.com
