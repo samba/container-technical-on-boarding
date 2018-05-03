@@ -20,7 +20,7 @@ configs:
     stage: 
       values:
         - key: ingress
-          value: "false"  
+          value: "true"
         - key: onboard.org
           secret: jobs/onboarding/github-org/stage
         - key: onboard.repo
