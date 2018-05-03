@@ -29,6 +29,8 @@ configs:
           secret: jobs/onboarding/github-app-client-id/stage
         - key: onboard.clientSecret
           secret: jobs/onboarding/github-app-client-secret/stage
+        - key: host
+          secret: jobs/onboarding/github-app-hostname/stage
     prod:
       values:
         - key: ingress
@@ -41,6 +43,8 @@ configs:
           secret: jobs/onboarding/github-app-client-id/prod
         - key: onboard.clientSecret
           secret: jobs/onboarding/github-app-client-secret/prod
+        - key: host
+          secret: jobs/onboarding/github-app-hostname/prod
 
 stage:
   deploy: true
