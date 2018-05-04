@@ -55,6 +55,24 @@ tasks:
       - Cluster Operator
 
 
+
+  - title: "Topic: The 12-Factor Application"
+    assignee: *new_hire
+    tags:
+      - Application Developer
+    description: | 
+      Delivering applications on Kubernetes is much simpler when they adhere to the [12-factor application principles][1] (or [in Korean][2]).
+
+      These principles provide the foundation of successful architectures in cloud computing platforms.
+      Legacy applications will migrate into containers and Kubernetes most readily with small, focused changes to adopt the 12-factor principles.
+
+      New applications should be developed with these principles in mind.
+
+      [1]: http://12factor.net/
+      [2]: https://12factor.net/ko/
+
+      
+
   - title: Read Cloud Native Computing Team General Confluence Page
     assignee: *new_hire
     description: |
