@@ -94,6 +94,21 @@ tasks:
       [1]: https://kubernetes.io/docs/tasks/run-application/run-single-instance-stateful-application/
 
 
+  - title: Managing Resource Allocation for Apps in Kubernetes
+    assignee: *new_hire
+    tags:
+      - Application Developer
+    description: |
+
+      - [ ] [Managing Compute Resources for Pods][1]
+      - [ ] [Assigning Memory Resources to Pods][2]
+      - [ ] [Assigning CPU Resources to Pods][3]
+
+      [1]: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/
+      [2]: https://kubernetes.io/docs/tasks/configure-pod-container/assign-memory-resource/
+      [3]: https://kubernetes.io/docs/tasks/configure-pod-container/assign-cpu-resource/
+
+
   - title: Packaging Kubernetes Apps with Helm
     assignee: *new_hire
     tags:
