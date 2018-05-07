@@ -26,6 +26,7 @@ tasks:
       - [ ] [Hello Minikube](https://kubernetes.io/docs/tutorials/stateless-application/hello-minikube/)  deploys a Node.JS app to Kubernetes using only Kubernetes primitives
       - [ ] [DigitalOcean's Introduction to Kubernetes](https://www.digitalocean.com/community/tutorials/an-introduction-to-kubernetes)
       - [ ] [Kubernetes Concepts in 10 minutes](http://omerio.com/2015/12/18/learn-the-kubernetes-key-concepts-in-10-minutes/) covers the fundamental architectural components of the Kubernetes platform
+      - [ ] [Containerizing Java applications for Kubernetes](https://www.oreilly.com/ideas/how-to-manage-docker-containers-in-kubernetes-with-java)
 
       Videos:
       - [ ] [Docker Container Basics](https://www.youtube.com/watch?v=aLipr7tTuA4) (11min)
