@@ -82,6 +82,17 @@ tasks:
 
       
 
+  - title: Stateful Applications in Kubernetes
+    assignee: *new_hire
+    tags:
+      - Application Developer
+
+    description: |
+
+      - [ ] [Running a single instance stateful app in Kubernetes][1]
+
+      [1]: https://kubernetes.io/docs/tasks/run-application/run-single-instance-stateful-application/
+
   - title: Read Cloud Native Computing Team General Confluence Page
     assignee: *new_hire
     description: |
