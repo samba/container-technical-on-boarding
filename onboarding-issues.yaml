@@ -69,8 +69,16 @@ tasks:
 
       New applications should be developed with these principles in mind.
 
+      Extended reading:
+
+      - [ ] [12 Factor Applications on Kubernetes][3]
+      - [ ] [Kelsey Hightower's 12 Fractured Apps][4] *Extending apps for resilience and performance in Kubernetes*
+
+
       [1]: http://12factor.net/
       [2]: https://12factor.net/ko/
+      [3]: https://www.mirantis.com/blog/how-do-you-build-12-factor-apps-using-kubernetes/
+      [4]: https://medium.com/@kelseyhightower/12-fractured-apps-1080c73d481c
 
       
 
