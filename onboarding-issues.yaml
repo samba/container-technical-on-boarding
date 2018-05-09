@@ -21,27 +21,40 @@ tasks:
   - title: Introduction to Kubernetes - the basics
     assignee: *new_hire
     description: |
-      Resources:
-      - [ ] [Kubernetes Basics](https://kubernetes.io/docs/tutorials/kubernetes-basics/)
-      - [ ] [Hello Minikube](https://kubernetes.io/docs/tutorials/stateless-application/hello-minikube/)  deploys a Node.JS app to Kubernetes using only Kubernetes primitives
-      - [ ] [DigitalOcean's Introduction to Kubernetes](https://www.digitalocean.com/community/tutorials/an-introduction-to-kubernetes)
-      - [ ] [Kubernetes Concepts in 10 minutes](http://omerio.com/2015/12/18/learn-the-kubernetes-key-concepts-in-10-minutes/) covers the fundamental architectural components of the Kubernetes platform
-      - [ ] [Containerizing Java applications for Kubernetes](https://www.oreilly.com/ideas/how-to-manage-docker-containers-in-kubernetes-with-java)
-
-      Videos:
+      Docker Concepts:
+      - [ ] [What’s a Container?](http://pca.st/5lKK) Podcast with Kelsey Hightower; listen until 19:45
       - [ ] [Docker Container Basics](https://www.youtube.com/watch?v=aLipr7tTuA4) (11min)
+
+      Kubernetes Concepts:
+      - [ ] [What is Kubernetes?](https://www.youtube.com/watch?v=R-3dfURb2hA) (video; 6:34)
       - [ ] [Intro to Container Management and Kubernetes](https://www.youtube.com/watch?v=qCxYjq7EBHc)  (14min)
+      - [ ] [DigitalOcean's Introduction to Kubernetes](https://www.digitalocean.com/community/tutorials/an-introduction-to-kubernetes) Article that introduces Kubernetes concepts
+      - [ ] [Kubernetes Concepts in 10 minutes](http://omerio.com/2015/12/18/learn-the-kubernetes-key-concepts-in-10-minutes/) Article with visuals that covers the fundamental architectural components of the Kubernetes platform
+
+      Practical Exposure and tutorials:
+      - [ ] [Scalable Microservices With Kubernetes - Free course Udacity](https://www.udacity.com/course/scalable-microservices-with-kubernetes--ud615)
+      - [ ] [Kubernetes Basics](https://kubernetes.io/docs/tutorials/kubernetes-basics/)
+      - [ ] [Hello Minikube](https://kubernetes.io/docs/tutorials/stateless-application/hello-minikube/)  deploys a Node.JS app to Kubernetes using only Kubernetes primitives. Warning - MacOS only
+      - [ ] [Containerizing Java applications for Kubernetes](https://www.oreilly.com/ideas/how-to-manage-docker-containers-in-kubernetes-with-java)
+      - [ ] [Dockerize and deploy a Java app to Kubernetes](https://sdqali.in/blog/2016/11/04/a-very-basic-introduction-to-deploying-a-java-application-using-kubernetes/)
+      - [ ] [Kubernetes 101 - Tutorial](https://kubernetes.io/docs/user-guide/walkthrough/)
+      - [ ] [Kubernetes 201 - Tutorial](https://kubernetes.io/docs/user-guide/walkthrough/k8s201/)
+
+      Continuing study:
+      - [ ] [Introduction To Kubernetes - free edX course](https://www.edx.org/course/introduction-to-kubernetes#) Highly recommended as one of the best resources available.
+      - [ ] [Jerome Petazzoni - Self-Paced Course in Slides](http://container.training/kube-selfpaced.yml.html#1)
+      - [ ] [Kubernetes Deconstructed](http://bitdo/kube-decon-full) (in-depth video; 55min)
       - [ ] [15 Kubernetes Features in 15 Minutes](https://www.youtube.com/watch?v=o85VR90RGNQ) (13.5min)
       - [ ] [Technical Overview of Kubernetes](https://www.youtube.com/watch?v=WwBdNXt6wO4) (30min)
       - [ ] [Kubernetes in Production](https://www.youtube.com/watch?v=-Ci4vd4rh4M) (53min)
 
-      
+
     tags:
       - CNCT new hire
       - Application Developer
       - Cluster Operator
 
-  - title: Kubernetes Control 
+  - title: Kubernetes Control
     assignee: *new_hire
     description: |
 
@@ -49,7 +62,7 @@ tasks:
 
       - [ ] [Overview of `kubectl` commands](https://kubernetes.io/docs/reference/kubectl/overview/)
       - [ ] [`kubectl` cheat sheet](https://kubernetes.io/docs/reference/kubectl/cheatsheet/)
-      
+
     tags:
       - CNCT new hire
       - Application Developer
@@ -61,7 +74,7 @@ tasks:
     assignee: *new_hire
     tags:
       - Application Developer
-    description: | 
+    description: |
       Delivering applications on Kubernetes is much simpler when they adhere to the [12-factor application principles][1] (or [in Korean][2]).
 
       These principles provide the foundation of successful architectures in cloud computing platforms.
@@ -80,7 +93,7 @@ tasks:
       [3]: https://www.mirantis.com/blog/how-do-you-build-12-factor-apps-using-kubernetes/
       [4]: https://medium.com/@kelseyhightower/12-fractured-apps-1080c73d481c
 
-      
+
 
   - title: Stateful Applications in Kubernetes
     assignee: *new_hire
@@ -156,12 +169,10 @@ tasks:
       - [ ] Related Cloud Computing services (AWS, GCP/GKE, etc)
       - [ ] Slack
 
-    
       [For CNCT new hires only :)]
 
     tags:
       - CNCT new hire
-
 
   - title: Write a Golang app and deploy it onto your Kubernetes cluster
     assignee: *new_hire
@@ -182,7 +193,7 @@ tasks:
         - [Kubernetes Coding Conventions](https://github.com/kubernetes/community/blob/master/contributors/devel/coding-conventions.md)
 
       [For CNCT new hires only :)]
-    
+
     tags:
       - CNCT new hire
 
